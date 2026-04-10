@@ -64,6 +64,7 @@ const state = {
 
 let polygons = [];
 let countryCenters = [];
+let countryCenterByIso = new Map();
 let labelPoints = [];
 let activeRequest = 0;
 let centerTimer = null;
@@ -96,6 +97,7 @@ const globe = Globe({
   )
   .polygonSideColor(() => 'rgba(101, 171, 255, 0.12)')
   .polygonStrokeColor(() => 'rgba(199, 224, 255, 0.34)')
+  .polygonsTransitionDuration(0)
   .labelsData([])
   .labelLat((d) => d.lat)
   .labelLng((d) => d.lng)
@@ -124,7 +126,7 @@ const globe = Globe({
     const name = feat?.properties?.ADMIN || feat?.properties?.NAME || iso;
     if (!iso || iso === '-99') return;
 
-    const center = getFeatureCenter(feat);
+    const center = countryCenterByIso.get(iso) || getFeatureCenter(feat);
     if (!center) return;
 
     selectCountry(iso, name, center.lat, center.lng);
@@ -224,6 +226,7 @@ function getFeatureCenter(feature) {
 }
 
 function buildCountryCenters() {
+  countryCenterByIso = new Map();
   countryCenters = polygons
     .map((f) => {
       const center = getFeatureCenter(f);
@@ -239,6 +242,10 @@ function buildCountryCenters() {
       };
     })
     .filter(Boolean);
+
+  for (const c of countryCenters) {
+    countryCenterByIso.set(c.iso, { lat: c.lat, lng: c.lng });
+  }
 }
 
 function findNearestCountry(lat, lng) {
@@ -330,13 +337,16 @@ function refreshLabels(anchor = state.globeCenter) {
 
 function updateSelectedCountry(iso) {
   state.selectedLocation.code = iso || '';
-  globe.polygonsData(polygons);
   refreshLabels(state.globeCenter);
 }
 
 function setPingVisual(lat, lng, color = '#ffd166') {
   globe.pointsData([{ lat, lng, color }]);
-  globe.ringsData([{ lat, lng, color: 'rgba(255, 209, 102, 0.86)' }]);
+  globe.ringsData(
+    isMobile
+      ? []
+      : [{ lat, lng, color: 'rgba(255, 209, 102, 0.86)' }]
+  );
 }
 
 function resizeGlobe() {
@@ -345,7 +355,7 @@ function resizeGlobe() {
 }
 
 function focusGlobe(lat, lng, altitude = 1.35) {
-  globe.pointOfView({ lat, lng, altitude }, 860);
+  globe.pointOfView({ lat, lng, altitude }, 420);
 }
 
 function getCurrentCenter() {
@@ -525,6 +535,8 @@ async function loadSignalFeed() {
   lastFeedLoader = loadSignalFeed;
   state.feedScope = 'global';
   updateSharePingVisibility();
+  openFeedSheet('Drudge · World');
+  renderFeed(state.feed);
 
   try {
     const data = await fetchJSON('/api/signal');
@@ -550,6 +562,8 @@ async function loadCountryFeed(code, name, center) {
   const req = ++activeRequest;
   setLoading(true);
   hideStatus();
+  openFeedSheet(`Drudge · ${name}`);
+  renderFeed(state.feed);
 
   state.selectedLocation = {
     type: 'country',
@@ -602,6 +616,8 @@ async function pingAt(lat, lng, labelHint = '', queryHint = '') {
 
   state.feedScope = 'local';
   updateSharePingVisibility();
+  openFeedSheet(`Drudge · ${labelHint || nearest?.label || 'Nearby'}`);
+  renderFeed(state.feed);
 
   lastFeedLoader = () => pingAt(lat, lng, labelHint, queryHint);
 
