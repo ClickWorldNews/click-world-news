@@ -69,7 +69,6 @@ let activeRequest = 0;
 let centerTimer = null;
 let autoRotateTimer = null;
 let lastFeedLoader = null;
-let lastLabelRefresh = 0;
 
 if (typeof window.Globe !== 'function') {
   showStatus('Globe engine failed to load. Refresh once or switch network.');
@@ -135,26 +134,8 @@ const globe = Globe({
     pingAt(coords.lat, coords.lng, '', '');
   });
 
-const htmlLabelsSupported =
-  typeof globe.htmlElementsData === 'function' &&
-  typeof globe.htmlLat === 'function' &&
-  typeof globe.htmlLng === 'function' &&
-  typeof globe.htmlAltitude === 'function' &&
-  typeof globe.htmlElement === 'function';
-
-if (htmlLabelsSupported) {
-  globe
-    .htmlElementsData([])
-    .htmlLat((d) => d.lat)
-    .htmlLng((d) => d.lng)
-    .htmlAltitude(() => 0.078)
-    .htmlElement((d) => {
-      const el = document.createElement('div');
-      el.className = 'country-globe-label';
-      el.textContent = d.label;
-      return el;
-    });
-}
+// Keep labels fully in WebGL (more stable on mobile than heavy HTML overlays).
+const htmlLabelsSupported = false;
 
 const controls = globe.controls();
 globe.pointOfView({ lat: 20, lng: 0, altitude: 2.05 }, 0);
@@ -295,29 +276,43 @@ function angularDistance(latA, lngA, latB, lngB) {
 }
 
 function buildLabelPoints(anchor = state.globeCenter) {
-  const limit = isMobile ? 120 : 180;
-  const visible = countryCenters
+  const nearest = findNearestCountry(anchor.lat, anchor.lng);
+  const major = countryCenters.filter((c) => MAJOR_LABEL_ISO.has(c.iso));
+
+  const centerSlice = countryCenters
     .map((c) => ({
       ...c,
       dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng)
     }))
-    .filter((c) => c.dist <= 2.45 || MAJOR_LABEL_ISO.has(c.iso) || c.iso === state.selectedLocation.code)
     .sort((a, b) => a.dist - b.dist)
-    .slice(0, limit)
+    .slice(0, isMobile ? 24 : 36)
     .map(({ dist, ...rest }) => rest);
+
+  const candidates = [...major, ...centerSlice];
 
   if (state.selectedLocation.code) {
     const selected = countryCenters.find((c) => c.iso === state.selectedLocation.code);
-    if (selected && !visible.some((v) => v.iso === selected.iso)) {
-      visible.push(selected);
-    }
+    if (selected) candidates.push(selected);
   }
 
-  if (!visible.length) {
-    visible.push(...countryCenters.filter((c) => MAJOR_LABEL_ISO.has(c.iso)).slice(0, 40));
+  if (nearest) candidates.push(nearest);
+
+  if (state.selectedLocation?.latlng && state.selectedLocation?.name && state.selectedLocation.type !== 'world') {
+    candidates.push({
+      iso: `PIN:${state.selectedLocation.code || 'XX'}`,
+      label: state.selectedLocation.name,
+      lat: Number(state.selectedLocation.latlng.lat),
+      lng: Number(state.selectedLocation.latlng.lng)
+    });
   }
 
-  labelPoints = visible;
+  const uniq = new Map();
+  for (const c of candidates) {
+    const key = `${c.iso}:${Number(c.lat).toFixed(2)}:${Number(c.lng).toFixed(2)}`;
+    if (!uniq.has(key)) uniq.set(key, c);
+  }
+
+  labelPoints = [...uniq.values()].slice(0, isMobile ? 64 : 96);
 }
 
 function applyLabels() {
@@ -382,14 +377,6 @@ function updateCenterUI() {
   if (state.mode === 'globe') {
     const nearest = findNearestCountry(c.lat, c.lng);
     regionChip.textContent = nearest ? `Region: ${nearest.label}` : 'Region: Open ocean';
-  }
-
-  if (state.labelsVisible) {
-    const now = Date.now();
-    if (now - lastLabelRefresh > 750) {
-      refreshLabels(c);
-      lastLabelRefresh = now;
-    }
   }
 }
 
@@ -524,11 +511,21 @@ function renderSavedPings() {
   });
 }
 
-async function fetchJSON(url) {
-  const res = await fetch(url);
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.error || 'Request failed');
-  return data;
+async function fetchJSON(url, timeoutMs = 9000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      cache: 'no-store'
+    });
+
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Request failed');
+    return data;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function loadSignalFeed() {
@@ -730,7 +727,6 @@ function bindEvents() {
     labelsToggleBtn.classList.toggle('active', state.labelsVisible);
     if (state.labelsVisible) {
       refreshLabels(state.globeCenter);
-      lastLabelRefresh = Date.now();
     } else {
       applyLabels();
     }
