@@ -30,6 +30,7 @@ const isMobile =
 
 const STORAGE_KEY = 'click-world-saved-pings-v1';
 const FEED_CACHE_KEY = 'click-world-last-feed-v1';
+const SELECTED_LOCATION_KEY = 'click-world-selected-location-v1';
 const DEMO_MODE = new URLSearchParams(window.location.search).get('demo');
 const MAJOR_LABEL_ISO = new Set([
   'US', 'CA', 'MX', 'BR', 'AR', 'CL', 'CO', 'PE',
@@ -86,25 +87,29 @@ const globe = Globe({
   .backgroundColor('rgba(0,0,0,0)')
   .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
   .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-  .showAtmosphere(!isMobile)
-  .atmosphereColor('#8fb8ff')
-  .atmosphereAltitude(0.11)
+  .showAtmosphere(true)
+  .atmosphereColor('#7dafff')
+  .atmosphereAltitude(isMobile ? 0.045 : 0.085)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.01))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(136, 125, 255, 0.72)'
-      : 'rgba(90, 176, 255, 0.16)'
+      ? 'rgba(104, 184, 255, 0.64)'
+      : 'rgba(73, 151, 229, 0.15)'
   )
-  .polygonSideColor(() => 'rgba(101, 171, 255, 0.12)')
-  .polygonStrokeColor(() => 'rgba(199, 224, 255, 0.34)')
+  .polygonSideColor(() => 'rgba(92, 154, 226, 0.12)')
+  .polygonStrokeColor(() => 'rgba(198, 220, 255, 0.27)')
   .polygonsTransitionDuration(0)
   .labelsData([])
   .labelLat((d) => d.lat)
   .labelLng((d) => d.lng)
   .labelText((d) => d.label)
-  .labelSize(() => 1.45)
-  .labelDotRadius(() => 0.16)
-  .labelAltitude(() => 0.055)
+  .labelSize(() => {
+    const altitude = Number(globe.pointOfView()?.altitude) || 2;
+    const base = isMobile ? 1.02 : 1.16;
+    return Math.max(0.74, base - Math.max(0, altitude - 1.2) * 0.24);
+  })
+  .labelDotRadius(() => (isMobile ? 0.09 : 0.12))
+  .labelAltitude(() => 0.048)
   .labelColor(() => 'rgba(238, 247, 255, 0.96)')
   .labelResolution(3)
   .pointsData([])
@@ -284,32 +289,36 @@ function angularDistance(latA, lngA, latB, lngB) {
 
 function buildLabelPoints(anchor = state.globeCenter) {
   const nearest = findNearestCountry(anchor.lat, anchor.lng);
-  const major = countryCenters.filter((c) => MAJOR_LABEL_ISO.has(c.iso));
+  const major = countryCenters
+    .filter((c) => MAJOR_LABEL_ISO.has(c.iso))
+    .map((c) => ({ ...c, priority: 3 }));
 
   const centerSlice = countryCenters
     .map((c) => ({
       ...c,
-      dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng)
+      dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng),
+      priority: 2
     }))
     .sort((a, b) => a.dist - b.dist)
-    .slice(0, isMobile ? 24 : 36)
+    .slice(0, isMobile ? 20 : 32)
     .map(({ dist, ...rest }) => rest);
 
   const candidates = [...major, ...centerSlice];
 
   if (state.selectedLocation.code) {
     const selected = countryCenters.find((c) => c.iso === state.selectedLocation.code);
-    if (selected) candidates.push(selected);
+    if (selected) candidates.push({ ...selected, priority: 5 });
   }
 
-  if (nearest) candidates.push(nearest);
+  if (nearest) candidates.push({ ...nearest, priority: 4 });
 
   if (state.selectedLocation?.latlng && state.selectedLocation?.name && state.selectedLocation.type !== 'world') {
     candidates.push({
       iso: `PIN:${state.selectedLocation.code || 'XX'}`,
       label: state.selectedLocation.name,
       lat: Number(state.selectedLocation.latlng.lat),
-      lng: Number(state.selectedLocation.latlng.lng)
+      lng: Number(state.selectedLocation.latlng.lng),
+      priority: 6
     });
   }
 
@@ -319,7 +328,16 @@ function buildLabelPoints(anchor = state.globeCenter) {
     if (!uniq.has(key)) uniq.set(key, c);
   }
 
-  labelPoints = [...uniq.values()].slice(0, isMobile ? 64 : 96);
+  const spacing = isMobile ? 0.2 : 0.16;
+  const picked = [];
+
+  for (const c of [...uniq.values()].sort((a, b) => (b.priority || 1) - (a.priority || 1))) {
+    const tooClose = picked.some((p) => angularDistance(c.lat, c.lng, p.lat, p.lng) < spacing);
+    if (!tooClose) picked.push(c);
+    if (picked.length >= (isMobile ? 34 : 52)) break;
+  }
+
+  labelPoints = picked;
 }
 
 function applyLabels() {
@@ -432,13 +450,24 @@ function openFeedSheet(title = 'Drudge · World') {
   feedTitle.textContent = title;
   feedSheet.classList.remove('hidden');
   feedSheet.setAttribute('aria-hidden', 'false');
+  feedSheet.style.opacity = '0';
+  feedSheet.style.transform = 'translateY(24px)';
+  requestAnimationFrame(() => {
+    feedSheet.style.opacity = '1';
+    feedSheet.style.transform = 'translateY(0)';
+  });
   state.mode = 'feed';
 }
 
 function closeFeedSheet() {
-  feedSheet.style.transform = '';
-  feedSheet.classList.add('hidden');
-  feedSheet.setAttribute('aria-hidden', 'true');
+  feedSheet.style.opacity = '0';
+  feedSheet.style.transform = 'translateY(24px)';
+  setTimeout(() => {
+    feedSheet.style.transform = '';
+    feedSheet.style.opacity = '';
+    feedSheet.classList.add('hidden');
+    feedSheet.setAttribute('aria-hidden', 'true');
+  }, 140);
   state.mode = 'globe';
 }
 
@@ -455,7 +484,20 @@ function savePing(name, lat, lng) {
 
 function loadSavedPings() {
   try {
-    state.savedPings = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const cleaned = (Array.isArray(raw) ? raw : [])
+      .filter((p) => Number.isFinite(Number(p?.lat)) && Number.isFinite(Number(p?.lng)))
+      .map((p) => ({
+        name: String(p.name || 'Pinned location'),
+        lat: Number(p.lat),
+        lng: Number(p.lng),
+        ts: Number(p.ts) || Date.now(),
+        key: p.key || `${Number(p.lat).toFixed(2)},${Number(p.lng).toFixed(2)}`
+      }))
+      .slice(0, 12);
+
+    state.savedPings = cleaned;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
   } catch {
     state.savedPings = [];
   }
@@ -485,6 +527,54 @@ function loadFeedCache() {
     }
   } catch {
     // Ignore invalid cache.
+  }
+}
+
+function persistSelectedLocation() {
+  try {
+    localStorage.setItem(SELECTED_LOCATION_KEY, JSON.stringify(state.selectedLocation));
+  } catch {
+    // Ignore storage errors.
+  }
+}
+
+function loadSelectedLocation() {
+  const params = new URLSearchParams(window.location.search);
+  const qLat = Number(params.get('lat'));
+  const qLng = Number(params.get('lng'));
+  const qLoc = params.get('loc');
+
+  if (Number.isFinite(qLat) && Number.isFinite(qLng)) {
+    state.selectedLocation = {
+      type: qLoc ? 'country' : 'region',
+      code: qLoc || 'US',
+      name: qLoc || 'Shared Ping',
+      latlng: { lat: qLat, lng: qLng }
+    };
+    return;
+  }
+
+  try {
+    const raw = JSON.parse(localStorage.getItem(SELECTED_LOCATION_KEY) || 'null');
+    const lat = Number(raw?.latlng?.lat);
+    const lng = Number(raw?.latlng?.lng);
+    const validType = ['world', 'country', 'region'].includes(raw?.type);
+
+    if (!validType || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return;
+    }
+
+    // Avoid confusing random defaults: keep World View unless explicitly deep-linked.
+    if (raw?.type === 'world') {
+      state.selectedLocation = {
+        type: 'world',
+        code: 'US',
+        name: 'World View',
+        latlng: { lat: 20, lng: 0 }
+      };
+    }
+  } catch {
+    // Ignore invalid storage.
   }
 }
 
@@ -571,6 +661,7 @@ async function loadCountryFeed(code, name, center) {
     name,
     latlng: center
   };
+  persistSelectedLocation();
   setLocationBadge(name);
   updateSelectedCountry(code);
   setPingVisual(center.lat, center.lng, '#ffd166');
@@ -636,6 +727,7 @@ async function pingAt(lat, lng, labelHint = '', queryHint = '') {
       name: finalName,
       latlng: { lat, lng }
     };
+    persistSelectedLocation();
 
     setLocationBadge(finalName);
     savePing(finalName, lat, lng);
@@ -873,6 +965,7 @@ async function initCountries() {
 
 async function init() {
   loadFeedCache();
+  loadSelectedLocation();
   loadSavedPings();
   renderSavedPings();
   renderFeed(state.feed);
@@ -893,8 +986,34 @@ async function init() {
   clearInterval(centerTimer);
   centerTimer = setInterval(updateCenterUI, 800);
   updateCenterUI();
+
+  if (state.selectedLocation?.type !== 'world') {
+    setLocationBadge(state.selectedLocation.name);
+    focusGlobe(state.selectedLocation.latlng.lat, state.selectedLocation.latlng.lng, 1.4);
+    setPingVisual(state.selectedLocation.latlng.lat, state.selectedLocation.latlng.lng);
+    updateSelectedCountry(state.selectedLocation.code);
+    state.feedScope = 'local';
+  }
+
   updateSharePingVisibility();
   lastFeedLoader = loadSignalFeed;
+
+  // Warm global feed so first Drudge open is instant.
+  if (!state.feed.length) {
+    fetchJSON('/api/signal', 7000)
+      .then((data) => {
+        state.feed = data.stories || [];
+        saveFeedCache(state.feed);
+      })
+      .catch(() => {});
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const qLat = Number(params.get('lat'));
+  const qLng = Number(params.get('lng'));
+  if (Number.isFinite(qLat) && Number.isFinite(qLng)) {
+    await pingAt(qLat, qLng, state.selectedLocation?.name || '', '');
+  }
 
   if (DEMO_MODE === 'feed') {
     await loadSignalFeed();
