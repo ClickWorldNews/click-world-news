@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Click World News</title>
+    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Click World News" />
+    <meta
+      name="description"
+      content="Tap-first world news globe with fast Drudge-style signal feed."
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="top-nav">
+        <div class="brand">
+          <span class="brand-dot">🌐</span>
+          <span class="brand-text">Click World News</span>
+        </div>
+        <button id="open-search" class="icon-btn" aria-label="Search and saved pings">🔍</button>
+      </header>
+
+      <main id="globe-stage">
+        <div id="globeViz"></div>
+
+        <div id="status-banner" class="status-banner hidden"></div>
+
+        <div class="overlay-top">
+          <div id="region-chip" class="chip">Region: World View</div>
+        </div>
+
+        <div class="center-target" aria-hidden="true">
+          <span class="target-ring"></span>
+          <span class="target-dot"></span>
+        </div>
+
+        <button id="ping-center" class="ping-fab hidden" type="button" aria-label="Ping center">Ping</button>
+      </main>
+
+      <nav class="bottom-bar">
+        <button id="labels-toggle" class="bottom-btn" type="button">🗺 Labels</button>
+        <button id="open-signal" class="bottom-btn primary" type="button">Drudge</button>
+        <div id="location-badge" class="location-badge">World View</div>
+      </nav>
+    </div>
+
+    <section id="feed-sheet" class="sheet hidden" aria-hidden="true">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h2 id="feed-title">Drudge · World</h2>
+        <div class="sheet-actions">
+          <button id="share-ping" class="sheet-btn hidden" type="button">Share Ping</button>
+          <button id="refresh-feed" class="sheet-btn" type="button">Refresh</button>
+          <button id="close-feed" class="sheet-btn" type="button">Close</button>
+        </div>
+      </div>
+      <div id="feed-loading" class="sheet-loading hidden">Fetching headlines…</div>
+      <ul id="feed-list" class="feed-list"></ul>
+    </section>
+
+    <section id="search-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <h3>Search & Saved Pings</h3>
+          <button id="close-search" class="sheet-btn" type="button">Close</button>
+        </div>
+
+        <div class="search-row">
+          <input id="search-input" type="text" placeholder="Search city, state, or country" />
+          <button id="search-submit" type="button">Find</button>
+        </div>
+
+        <div id="search-results" class="search-results"></div>
+
+        <div class="saved-head">
+          <strong>Saved</strong>
+          <button id="clear-saved" class="sheet-btn" type="button">Clear</button>
+        </div>
+        <div id="saved-list" class="saved-list"></div>
+      </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script>
+      if (!window.THREE) {
+        document.write('<script src="https://unpkg.com/three@0.160.0/build/three.min.js"><\\/script>');
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.39.2/dist/globe.gl.min.js"></script>
+    <script>
+      if (typeof window.Globe !== 'function') {
+        document.write('<script src="https://unpkg.com/globe.gl@2.39.2/dist/globe.gl.min.js"><\\/script>');
+      }
+    </script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

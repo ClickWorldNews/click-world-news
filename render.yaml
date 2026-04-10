@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: click-world-news
+    env: node
+    plan: free
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/signal
+    autoDeploy: true
