@@ -86,9 +86,9 @@ const globe = Globe({
   .backgroundColor('rgba(0,0,0,0)')
   .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
   .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-  .showAtmosphere(true)
-  .atmosphereColor('#5eb6ff')
-  .atmosphereAltitude(0.2)
+  .showAtmosphere(!isMobile)
+  .atmosphereColor('#8fb8ff')
+  .atmosphereAltitude(0.11)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.01))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
