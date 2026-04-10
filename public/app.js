@@ -357,21 +357,11 @@ function getCurrentCenter() {
 }
 
 function getReticleTarget() {
-  const center = getCurrentCenter();
-  const rect = globeMount.getBoundingClientRect();
-
-  if (rect && typeof globe.toGlobeCoords === 'function') {
-    const candidate = globe.toGlobeCoords(rect.width / 2, rect.height / 2);
-    if (candidate && Number.isFinite(candidate.lat) && Number.isFinite(candidate.lng)) {
-      return candidate;
-    }
-  }
-
-  return center;
+  return getCurrentCenter();
 }
 
 function updateCenterUI() {
-  const c = getReticleTarget();
+  const c = getCurrentCenter();
   state.globeCenter = { lat: c.lat, lng: c.lng };
 
   if (state.mode === 'globe') {
@@ -885,7 +875,7 @@ async function init() {
   }
 
   clearInterval(centerTimer);
-  centerTimer = setInterval(updateCenterUI, 320);
+  centerTimer = setInterval(updateCenterUI, 800);
   updateCenterUI();
   updateSharePingVisibility();
   lastFeedLoader = loadSignalFeed;
