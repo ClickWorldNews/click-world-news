@@ -64,6 +64,7 @@ const ART = {
 
 const GLOBE_TEXTURE_URL = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
 const GLOBE_BUMP_URL = '/vendor/earth-topology.png';
+const ASSET_VERSION = '20260411f';
 const USE_ADMIN_BOUNDARIES = false;
 
 const MAJOR_CITY_LABELS = [
@@ -140,26 +141,26 @@ const globe = Globe({
   }
 })(globeMount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl(GLOBE_TEXTURE_URL)
-  .bumpImageUrl(GLOBE_BUMP_URL)
+  .globeImageUrl(`${GLOBE_TEXTURE_URL}?v=${ASSET_VERSION}`)
+  .bumpImageUrl(`${GLOBE_BUMP_URL}?v=${ASSET_VERSION}`)
   .showAtmosphere(true)
-  .atmosphereColor(ART.rimHalo)
-  .atmosphereAltitude(0.068)
-  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.056 : 0.004))
+  .atmosphereColor('#8ca4c8')
+  .atmosphereAltitude(0.056)
+  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.046 : 0.0012))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(226, 192, 138, 0.20)'
-      : 'rgba(33, 44, 64, 0.20)'
+      ? 'rgba(226, 192, 138, 0.14)'
+      : 'rgba(16, 22, 34, 0.06)'
   )
   .polygonSideColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(154, 122, 74, 0.18)'
-      : 'rgba(11, 20, 35, 0.14)'
+      ? 'rgba(154, 122, 74, 0.16)'
+      : 'rgba(10, 16, 28, 0.04)'
   )
   .polygonStrokeColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(242, 216, 174, 0.95)'
-      : 'rgba(175, 191, 220, 0.22)'
+      ? 'rgba(248, 226, 188, 0.88)'
+      : 'rgba(194, 208, 236, 0.14)'
   )
   .polygonsTransitionDuration(0)
   .labelsData([])
@@ -253,32 +254,32 @@ if (typeof globe.renderer === 'function') {
 function enforceGlobeVisualTheme() {
   if (!(window.THREE && typeof globe.globeMaterial === 'function')) return;
 
-  globe.globeImageUrl(GLOBE_TEXTURE_URL);
+  globe.globeImageUrl(`${GLOBE_TEXTURE_URL}?v=${ASSET_VERSION}`);
   const globeMat = globe.globeMaterial?.();
   if (globeMat) {
-    globeMat.color?.set?.('#ffffff');
-    globeMat.emissive?.set?.('#0a101c');
-    globeMat.specular?.set?.('#d9b77f');
-    globeMat.shininess = 14;
-    globeMat.bumpScale = 0.24;
+    globeMat.color?.set?.('#f8fbff');
+    globeMat.emissive?.set?.('#060b14');
+    globeMat.specular?.set?.('#e7c38e');
+    globeMat.shininess = 18;
+    globeMat.bumpScale = 0.28;
     globeMat.needsUpdate = true;
   }
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: '#7e9ccc',
-      opacity: 0.16,
+      color: '#8ea5c9',
+      opacity: 0.12,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.062);
+    globe.atmosphereAltitude(0.054);
   }
 
   if (typeof globe.renderer === 'function') {
     const renderer = globe.renderer();
     if (renderer) {
       renderer.toneMapping = window.THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = isMobile ? 0.98 : 1.02;
+      renderer.toneMappingExposure = isMobile ? 1.04 : 1.08;
       renderer.outputColorSpace = window.THREE.SRGBColorSpace;
 
       const mat = globe.globeMaterial?.();
@@ -295,26 +296,26 @@ function enforceGlobeVisualTheme() {
     if (scene?.traverse) {
       scene.traverse((obj) => {
         if (obj?.isAmbientLight) {
-          obj.color?.set?.('#9eaecd');
-          obj.intensity = 0.16;
+          obj.color?.set?.('#a8b7d4');
+          obj.intensity = 0.12;
         }
         if (obj?.isDirectionalLight) {
-          obj.color?.set?.('#c8d8f2');
-          obj.intensity = 0.66;
-          if (obj?.position?.set) obj.position.set(2.5, 1.55, -2.6);
+          obj.color?.set?.('#d8e4f7');
+          obj.intensity = 0.84;
+          if (obj?.position?.set) obj.position.set(2.8, 1.8, -2.5);
         }
       });
     }
 
     if (window.THREE && !scene.userData.cwnRimLight) {
-      const rim = new THREE.DirectionalLight('#d9b782', 0.26);
-      rim.position.set(3.0, 1.1, -2.2);
+      const rim = new THREE.DirectionalLight('#e1bf8a', 0.34);
+      rim.position.set(3.2, 1.25, -2.1);
       scene.add(rim);
       scene.userData.cwnRimLight = rim;
     } else if (scene.userData.cwnRimLight) {
-      scene.userData.cwnRimLight.color?.set?.('#d9b782');
-      scene.userData.cwnRimLight.intensity = 0.26;
-      scene.userData.cwnRimLight.position?.set?.(3.0, 1.1, -2.2);
+      scene.userData.cwnRimLight.color?.set?.('#e1bf8a');
+      scene.userData.cwnRimLight.intensity = 0.34;
+      scene.userData.cwnRimLight.position?.set?.(3.2, 1.25, -2.1);
     }
   }
 }
