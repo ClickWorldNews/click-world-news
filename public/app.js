@@ -45,6 +45,22 @@ const NAME_OVERRIDES = {
   AE: 'UAE'
 };
 
+const ART = {
+  oceanA: '#070B16',
+  oceanB: '#0C1224',
+  oceanC: '#161C2F',
+  landA: '#2D3A52',
+  landB: '#4A5870',
+  landHi: '#C9D3E2',
+  goldDim: '#9A7A4A',
+  gold: '#C9A46A',
+  goldHi: '#E2C08A',
+  rimCore: '#F2D8AE',
+  rimHalo: '#E7C48A',
+  text: '#E7E9EF',
+  textSub: '#BFC5D3'
+};
+
 const MAJOR_CITY_LABELS = [
   { label: 'New York', lat: 40.7128, lng: -74.0060, color: 'rgba(255, 221, 166, 0.96)' },
   { label: 'Los Angeles', lat: 34.0522, lng: -118.2437, color: 'rgba(255, 221, 166, 0.96)' },
@@ -120,23 +136,23 @@ const globe = Globe({
   .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
   .showAtmosphere(true)
-  .atmosphereColor('#334455')
-  .atmosphereAltitude(0.07)
+  .atmosphereColor(ART.rimHalo)
+  .atmosphereAltitude(0.085)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(164, 181, 196, 0.28)'
+      ? 'rgba(226, 192, 138, 0.22)'
       : 'rgba(0, 0, 0, 0)'
   )
   .polygonSideColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(94, 109, 126, 0.14)'
+      ? 'rgba(154, 122, 74, 0.12)'
       : 'rgba(0, 0, 0, 0)'
   )
   .polygonStrokeColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(171, 191, 214, 0.44)'
-      : 'rgba(0, 0, 0, 0)'
+      ? 'rgba(226, 192, 138, 0.72)'
+      : 'rgba(154, 122, 74, 0.24)'
   )
   .polygonsTransitionDuration(0)
   .labelsData([])
@@ -145,12 +161,12 @@ const globe = Globe({
   .labelText((d) => d.label)
   .labelSize((d) => {
     const altitude = Number(globe.pointOfView()?.altitude) || 2;
-    const base = d?.labelScale ?? (isMobile ? 0.76 : 0.88);
-    return Math.max(0.52, base - Math.max(0, altitude - 1.2) * 0.18);
+    const base = d?.labelScale ?? (isMobile ? 0.64 : 0.74);
+    return Math.max(0.46, base - Math.max(0, altitude - 1.2) * 0.16);
   })
-  .labelDotRadius(() => (isMobile ? 0.09 : 0.12))
+  .labelDotRadius(() => (isMobile ? 0.06 : 0.08))
   .labelAltitude(() => 0.048)
-  .labelColor((d) => d?.color || 'rgba(238, 247, 255, 0.96)')
+  .labelColor((d) => d?.color || 'rgba(231, 233, 239, 0.95)')
   .labelResolution(isMobile ? 2 : 3)
   .pointsData([])
   .pointLat((d) => d.lat)
@@ -196,6 +212,10 @@ if (typeof globe.polygonCapCurvatureResolution === 'function') {
   globe.polygonCapCurvatureResolution(isMobile ? 2 : 4);
 }
 
+if (typeof globe.showGraticules === 'function') {
+  globe.showGraticules(true);
+}
+
 if (typeof globe.renderer === 'function') {
   const renderer = globe.renderer();
   if (renderer?.setPixelRatio) {
@@ -208,20 +228,44 @@ function enforceGlobeVisualTheme() {
 
   globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
   globe.globeMaterial(new THREE.MeshPhongMaterial({
-    color: '#0a1f35',
-    emissive: '#0a1f35',
-    specular: '#334455',
-    shininess: 6
+    color: ART.landA,
+    emissive: ART.oceanB,
+    specular: ART.landHi,
+    shininess: 8
   }));
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: '#334455',
-      opacity: 0.18,
+      color: ART.rimHalo,
+      opacity: 0.16,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.07);
+    globe.atmosphereAltitude(0.085);
+  }
+
+  if (typeof globe.scene === 'function') {
+    const scene = globe.scene();
+    if (scene?.traverse) {
+      scene.traverse((obj) => {
+        if (obj?.isAmbientLight) {
+          obj.color?.set?.(ART.textSub);
+          obj.intensity = 0.28;
+        }
+        if (obj?.isDirectionalLight) {
+          obj.color?.set?.(ART.rimCore);
+          obj.intensity = 0.62;
+          if (obj?.position?.set) obj.position.set(2.4, 1.5, -2.6);
+        }
+      });
+    }
+
+    if (window.THREE && !scene.userData.cwnRimLight) {
+      const rim = new THREE.DirectionalLight(ART.rimHalo, 0.44);
+      rim.position.set(2.9, 1.1, -2.3);
+      scene.add(rim);
+      scene.userData.cwnRimLight = rim;
+    }
   }
 }
 
