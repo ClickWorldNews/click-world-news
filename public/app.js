@@ -45,6 +45,35 @@ const NAME_OVERRIDES = {
   AE: 'UAE'
 };
 
+const MAJOR_CITY_LABELS = [
+  { label: 'New York', lat: 40.7128, lng: -74.0060, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'Los Angeles', lat: 34.0522, lng: -118.2437, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'London', lat: 51.5072, lng: -0.1276, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'Paris', lat: 48.8566, lng: 2.3522, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'Istanbul', lat: 41.0082, lng: 28.9784, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'Dubai', lat: 25.2048, lng: 55.2708, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'Tokyo', lat: 35.6764, lng: 139.6500, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'Seoul', lat: 37.5665, lng: 126.9780, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'Mumbai', lat: 19.0760, lng: 72.8777, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'Singapore', lat: 1.3521, lng: 103.8198, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'Sydney', lat: -33.8688, lng: 151.2093, color: 'rgba(255, 221, 166, 0.96)' },
+  { label: 'São Paulo', lat: -23.5505, lng: -46.6333, color: 'rgba(255, 221, 166, 0.96)' }
+];
+
+const STATE_PROVINCE_LABELS = [
+  { label: 'California', lat: 36.7783, lng: -119.4179, color: 'rgba(240, 248, 255, 0.95)' },
+  { label: 'Texas', lat: 31.9686, lng: -99.9018, color: 'rgba(240, 248, 255, 0.95)' },
+  { label: 'Florida', lat: 27.6648, lng: -81.5158, color: 'rgba(240, 248, 255, 0.95)' },
+  { label: 'New York State', lat: 42.9538, lng: -75.5268, color: 'rgba(240, 248, 255, 0.95)' },
+  { label: 'Ontario', lat: 50.0000, lng: -85.0000, color: 'rgba(240, 248, 255, 0.95)' },
+  { label: 'Quebec', lat: 52.9399, lng: -73.5491, color: 'rgba(240, 248, 255, 0.95)' },
+  { label: 'British Columbia', lat: 53.7267, lng: -127.6476, color: 'rgba(240, 248, 255, 0.95)' },
+  { label: 'Bavaria', lat: 48.7904, lng: 11.4979, color: 'rgba(240, 248, 255, 0.95)' },
+  { label: 'Catalonia', lat: 41.5912, lng: 1.5209, color: 'rgba(240, 248, 255, 0.95)' },
+  { label: 'Maharashtra', lat: 19.7515, lng: 75.7139, color: 'rgba(240, 248, 255, 0.95)' },
+  { label: 'New South Wales', lat: -31.2532, lng: 146.9211, color: 'rgba(240, 248, 255, 0.95)' }
+];
+
 const state = {
   globeCenter: { lat: 20, lng: 0 },
   selectedLocation: {
@@ -121,7 +150,7 @@ const globe = Globe({
   })
   .labelDotRadius(() => (isMobile ? 0.09 : 0.12))
   .labelAltitude(() => 0.048)
-  .labelColor(() => 'rgba(238, 247, 255, 0.96)')
+  .labelColor((d) => d?.color || 'rgba(238, 247, 255, 0.96)')
   .labelResolution(isMobile ? 2 : 3)
   .pointsData([])
   .pointLat((d) => d.lat)
@@ -339,26 +368,55 @@ function buildLabelPoints(anchor = state.globeCenter) {
   const nearest = findNearestCountry(anchor.lat, anchor.lng);
   const major = countryCenters
     .filter((c) => MAJOR_LABEL_ISO.has(c.iso))
-    .map((c) => ({ ...c, priority: 3 }));
+    .map((c) => ({ ...c, priority: 3, color: 'rgba(238, 247, 255, 0.96)' }));
 
   const centerSlice = countryCenters
     .map((c) => ({
       ...c,
       dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng),
-      priority: 2
+      priority: 2,
+      color: 'rgba(238, 247, 255, 0.96)'
     }))
     .sort((a, b) => a.dist - b.dist)
     .slice(0, isMobile ? 16 : 28)
     .map(({ dist, ...rest }) => rest);
 
-  const candidates = [...major, ...centerSlice];
+  const citySlice = MAJOR_CITY_LABELS
+    .map((c) => ({
+      iso: `CITY:${c.label}`,
+      label: c.label,
+      lat: c.lat,
+      lng: c.lng,
+      color: c.color,
+      dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng),
+      priority: 2.7
+    }))
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, isMobile ? 6 : 12)
+    .map(({ dist, ...rest }) => rest);
+
+  const stateSlice = STATE_PROVINCE_LABELS
+    .map((c) => ({
+      iso: `STATE:${c.label}`,
+      label: c.label,
+      lat: c.lat,
+      lng: c.lng,
+      color: c.color,
+      dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng),
+      priority: 2.4
+    }))
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, isMobile ? 5 : 9)
+    .map(({ dist, ...rest }) => rest);
+
+  const candidates = [...major, ...centerSlice, ...citySlice, ...stateSlice];
 
   if (state.selectedLocation.code) {
     const selected = countryCenters.find((c) => c.iso === state.selectedLocation.code);
-    if (selected) candidates.push({ ...selected, priority: 5 });
+    if (selected) candidates.push({ ...selected, priority: 5, color: 'rgba(255, 221, 166, 0.98)' });
   }
 
-  if (nearest) candidates.push({ ...nearest, priority: 4 });
+  if (nearest) candidates.push({ ...nearest, priority: 4, color: 'rgba(245, 251, 255, 0.98)' });
 
   if (state.selectedLocation?.latlng && state.selectedLocation?.name && state.selectedLocation.type !== 'world') {
     candidates.push({
@@ -366,7 +424,8 @@ function buildLabelPoints(anchor = state.globeCenter) {
       label: state.selectedLocation.name,
       lat: Number(state.selectedLocation.latlng.lat),
       lng: Number(state.selectedLocation.latlng.lng),
-      priority: 6
+      priority: 6,
+      color: 'rgba(255, 221, 166, 0.98)'
     });
   }
 
