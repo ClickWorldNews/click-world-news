@@ -72,6 +72,7 @@ let centerTimer = null;
 let autoRotateTimer = null;
 let lastFeedLoader = null;
 let activeFetchController = null;
+let isInteracting = false;
 
 if (typeof window.Globe !== 'function') {
   showStatus('Globe engine failed to load. Refresh once or switch network.');
@@ -82,15 +83,16 @@ const globe = Globe({
   animateIn: false,
   rendererConfig: {
     antialias: !isMobile,
-    alpha: true
+    alpha: true,
+    powerPreference: 'high-performance'
   }
 })(globeMount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('/vendor/earth-night.jpg')
+  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
-  .showAtmosphere(false)
-  .atmosphereColor('#0d121a')
-  .atmosphereAltitude(0)
+  .showAtmosphere(true)
+  .atmosphereColor('#334455')
+  .atmosphereAltitude(0.12)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
@@ -165,37 +167,32 @@ if (typeof globe.polygonCapCurvatureResolution === 'function') {
   globe.polygonCapCurvatureResolution(isMobile ? 2 : 4);
 }
 
+if (typeof globe.renderer === 'function') {
+  const renderer = globe.renderer();
+  if (renderer?.setPixelRatio) {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5));
+  }
+}
+
 function enforceGlobeVisualTheme() {
-  if (typeof globe.showAtmosphere === 'function') {
-    globe.showAtmosphere(false).atmosphereColor('#0d121a').atmosphereAltitude(0);
-  }
+  if (!(window.THREE && typeof globe.globeMaterial === 'function')) return;
 
-  if (typeof globe.globeMaterial === 'function' && window.THREE) {
-    const material = globe.globeMaterial();
-    if (material) {
-      material.color = new THREE.Color('#e2e9f2');
-      material.emissive = new THREE.Color('#000000');
-      material.emissiveIntensity = 0.03;
-      material.shininess = 2.4;
-      material.specular = new THREE.Color('#0b111b');
-      material.needsUpdate = true;
-    }
-  }
+  globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
+  globe.globeMaterial(new THREE.MeshPhongMaterial({
+    color: '#0a1f35',
+    emissive: '#0a1f35',
+    specular: '#334455',
+    shininess: 6
+  }));
 
-  if (typeof globe.scene === 'function' && window.THREE) {
-    const scene = globe.scene();
-    if (scene?.traverse) {
-      scene.traverse((obj) => {
-        if (obj?.isAmbientLight) {
-          obj.intensity = 0.64;
-          obj.color = new THREE.Color('#d5dbe3');
-        }
-        if (obj?.isDirectionalLight) {
-          obj.intensity = 0.78;
-          obj.color = new THREE.Color('#ffffff');
-        }
-      });
-    }
+  if (typeof globe.atmosphereMaterial === 'function') {
+    globe.showAtmosphere(true);
+    globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
+      color: '#334455',
+      opacity: 0.18,
+      transparent: true
+    }));
+    globe.atmosphereAltitude(0.12);
   }
 }
 
@@ -204,14 +201,18 @@ setTimeout(enforceGlobeVisualTheme, 500);
 setTimeout(enforceGlobeVisualTheme, 1500);
 
 controls.addEventListener('start', () => {
+  isInteracting = true;
   controls.autoRotate = false;
   clearTimeout(autoRotateTimer);
 });
 
 controls.addEventListener('end', () => {
+  isInteracting = false;
+  enforceGlobeVisualTheme();
   clearTimeout(autoRotateTimer);
   autoRotateTimer = setTimeout(() => {
     controls.autoRotate = true;
+    enforceGlobeVisualTheme();
   }, 2600);
 });
 
@@ -376,7 +377,7 @@ function buildLabelPoints(anchor = state.globeCenter) {
   }
 
   const picked = [];
-  const spacing = isMobile ? 0.23 : 0.17;
+  const spacing = isMobile ? 0.27 : 0.2;
 
   for (const c of [...uniq.values()].sort((a, b) => (b.priority || 1) - (a.priority || 1))) {
     const tooClose = picked.some((p) => angularDistance(c.lat, c.lng, p.lat, p.lng) < spacing);
@@ -463,7 +464,7 @@ function updateCenterUI() {
   const c = getCurrentCenter();
   state.globeCenter = { lat: c.lat, lng: c.lng };
 
-  if (state.labelsVisible && Date.now() - state.lastLabelRefresh > 4200) {
+  if (!isInteracting && state.labelsVisible && Date.now() - state.lastLabelRefresh > 5200) {
     state.lastLabelRefresh = Date.now();
     refreshLabels(c);
   }
@@ -915,14 +916,7 @@ function bindEvents() {
     }
   });
 
-  openSignalBtn.addEventListener('click', () => {
-    if (state.selectedLocation?.type !== 'world' && state.feedScope === 'local') {
-      openFeedSheet(`Drudge · ${state.selectedLocation.name}`);
-      renderFeed(state.feed);
-      return;
-    }
-    loadSignalFeed();
-  });
+  openSignalBtn.addEventListener('click', loadSignalFeed);
   closeFeedBtn.addEventListener('click', closeFeedSheet);
 
   sharePingBtn?.addEventListener('click', async () => {
@@ -1076,7 +1070,7 @@ async function init() {
   }
 
   clearInterval(centerTimer);
-  centerTimer = setInterval(updateCenterUI, 1400);
+  centerTimer = setInterval(updateCenterUI, 1800);
   updateCenterUI();
 
   if (state.selectedLocation?.type !== 'world') {
