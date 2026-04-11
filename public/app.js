@@ -85,11 +85,11 @@ const globe = Globe({
   }
 })(globeMount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
-  .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
+  .globeImageUrl('/vendor/earth-night.jpg')
+  .bumpImageUrl('/vendor/earth-topology.png')
   .showAtmosphere(true)
-  .atmosphereColor('#586a7d')
-  .atmosphereAltitude(isMobile ? 0.02 : 0.032)
+  .atmosphereColor('#3e5b80')
+  .atmosphereAltitude(isMobile ? 0.018 : 0.028)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.01))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
@@ -105,7 +105,7 @@ const globe = Globe({
   .labelText((d) => d.label)
   .labelSize(() => {
     const altitude = Number(globe.pointOfView()?.altitude) || 2;
-    const base = isMobile ? 1.02 : 1.16;
+    const base = isMobile ? 0.9 : 1.04;
     return Math.max(0.74, base - Math.max(0, altitude - 1.2) * 0.24);
   })
   .labelDotRadius(() => (isMobile ? 0.09 : 0.12))
@@ -159,11 +159,11 @@ if (typeof globe.polygonCapCurvatureResolution === 'function') {
 if (typeof globe.globeMaterial === 'function' && window.THREE) {
   const material = globe.globeMaterial();
   if (material) {
-    material.color = new THREE.Color('#8d9aab');
-    material.emissive = new THREE.Color('#050a12');
-    material.emissiveIntensity = isMobile ? 0.22 : 0.18;
-    material.shininess = isMobile ? 4 : 7;
-    material.specular = new THREE.Color('#2f4155');
+    material.color = new THREE.Color('#f2f5ff');
+    material.emissive = new THREE.Color('#081321');
+    material.emissiveIntensity = isMobile ? 0.13 : 0.1;
+    material.shininess = isMobile ? 7 : 10;
+    material.specular = new THREE.Color('#294464');
   }
 }
 
@@ -311,7 +311,7 @@ function buildLabelPoints(anchor = state.globeCenter) {
       priority: 2
     }))
     .sort((a, b) => a.dist - b.dist)
-    .slice(0, isMobile ? 20 : 32)
+    .slice(0, isMobile ? 16 : 28)
     .map(({ dist, ...rest }) => rest);
 
   const candidates = [...major, ...centerSlice];
@@ -339,13 +339,13 @@ function buildLabelPoints(anchor = state.globeCenter) {
     if (!uniq.has(key)) uniq.set(key, c);
   }
 
-  const spacing = isMobile ? 0.2 : 0.16;
+  const spacing = isMobile ? 0.26 : 0.19;
   const picked = [];
 
   for (const c of [...uniq.values()].sort((a, b) => (b.priority || 1) - (a.priority || 1))) {
     const tooClose = picked.some((p) => angularDistance(c.lat, c.lng, p.lat, p.lng) < spacing);
     if (!tooClose) picked.push(c);
-    if (picked.length >= (isMobile ? 34 : 52)) break;
+    if (picked.length >= (isMobile ? 24 : 42)) break;
   }
 
   labelPoints = picked;
@@ -499,6 +499,8 @@ function savePing(name, lat, lng) {
 function loadSavedPings() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const maxAgeMs = 1000 * 60 * 60 * 24 * 45;
+    const now = Date.now();
     const cleaned = (Array.isArray(raw) ? raw : [])
       .filter((p) => Number.isFinite(Number(p?.lat)) && Number.isFinite(Number(p?.lng)))
       .map((p) => ({
@@ -508,6 +510,7 @@ function loadSavedPings() {
         ts: Number(p.ts) || Date.now(),
         key: p.key || `${Number(p.lat).toFixed(2)},${Number(p.lng).toFixed(2)}`
       }))
+      .filter((p) => now - p.ts < maxAgeMs)
       .slice(0, 12);
 
     state.savedPings = cleaned;
@@ -574,39 +577,17 @@ function loadSelectedLocation() {
     return;
   }
 
+  // Deterministic app start: always launch in World View unless explicitly deep-linked.
+  state.selectedLocation = {
+    type: 'world',
+    code: 'US',
+    name: 'World View',
+    latlng: { lat: 20, lng: 0 }
+  };
   try {
-    const raw = JSON.parse(localStorage.getItem(SELECTED_LOCATION_KEY) || 'null');
-    const lat = Number(raw?.latlng?.lat);
-    const lng = Number(raw?.latlng?.lng);
-    const validType = ['world', 'country', 'region'].includes(raw?.type);
-    const savedAt = Number(raw?.savedAt || 0);
-    const recentlySaved = Number.isFinite(savedAt) && Date.now() - savedAt < 1000 * 60 * 60 * 24;
-
-    if (!validType || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-      localStorage.removeItem(SELECTED_LOCATION_KEY);
-      return;
-    }
-
-    // Avoid confusing random defaults from stale state.
-    if (raw?.type === 'world' || !recentlySaved) {
-      state.selectedLocation = {
-        type: 'world',
-        code: 'US',
-        name: 'World View',
-        latlng: { lat: 20, lng: 0 }
-      };
-      if (!recentlySaved) localStorage.removeItem(SELECTED_LOCATION_KEY);
-      return;
-    }
-
-    state.selectedLocation = {
-      type: raw.type,
-      code: typeof raw.code === 'string' ? raw.code : 'US',
-      name: typeof raw.name === 'string' ? raw.name : 'Pinned location',
-      latlng: { lat, lng }
-    };
+    localStorage.removeItem(SELECTED_LOCATION_KEY);
   } catch {
-    // Ignore invalid storage.
+    // ignore storage failures
   }
 }
 
@@ -671,9 +652,18 @@ async function loadSignalFeed() {
     openFeedSheet('Drudge · World');
   } catch {
     if (req === activeRequest) {
-      renderFeed(state.feed);
-      showStatus('Feeds temporarily unavailable — showing last known headlines.');
-      openFeedSheet('Drudge · World');
+      try {
+        const backup = await fetchJSON('/api/news?country=US&name=World', 9000);
+        if (req !== activeRequest) return;
+        state.feed = backup.stories || state.feed;
+        saveFeedCache(state.feed);
+        renderFeed(state.feed);
+        openFeedSheet('Drudge · World');
+      } catch {
+        renderFeed(state.feed);
+        showStatus('Feeds temporarily unavailable — showing last known headlines.');
+        openFeedSheet('Drudge · World');
+      }
     }
   } finally {
     if (req === activeRequest) setLoading(false);
