@@ -86,7 +86,7 @@ const globe = Globe({
   }
 })(globeMount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('/vendor/earth-night.jpg')
+  .globeImageUrl('/vendor/earth-night-premium.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
   .showAtmosphere(false)
   .atmosphereColor('#0d121a')
@@ -157,26 +157,56 @@ if (typeof globe.polygonCapCurvatureResolution === 'function') {
   globe.polygonCapCurvatureResolution(isMobile ? 3 : 5);
 }
 
-if (typeof globe.globeMaterial === 'function' && window.THREE) {
-  const material = globe.globeMaterial();
-  if (material) {
-    material.color = new THREE.Color('#7a8593');
-    material.emissive = new THREE.Color('#000000');
-    material.emissiveIntensity = 0;
-    material.shininess = 1;
-    material.specular = new THREE.Color('#04080f');
+function enforceGlobeVisualTheme() {
+  if (typeof globe.showAtmosphere === 'function') {
+    globe.showAtmosphere(false).atmosphereColor('#0d121a').atmosphereAltitude(0);
+  }
+
+  if (typeof globe.globeMaterial === 'function' && window.THREE) {
+    const material = globe.globeMaterial();
+    if (material) {
+      material.color = new THREE.Color('#667282');
+      material.emissive = new THREE.Color('#000000');
+      material.emissiveIntensity = 0;
+      material.shininess = 0.6;
+      material.specular = new THREE.Color('#02050b');
+      material.needsUpdate = true;
+    }
+  }
+
+  if (typeof globe.scene === 'function' && window.THREE) {
+    const scene = globe.scene();
+    if (scene?.traverse) {
+      scene.traverse((obj) => {
+        if (obj?.isAmbientLight) {
+          obj.intensity = 0.34;
+          obj.color = new THREE.Color('#d5dbe3');
+        }
+        if (obj?.isDirectionalLight) {
+          obj.intensity = 0.46;
+          obj.color = new THREE.Color('#ffffff');
+        }
+      });
+    }
   }
 }
+
+enforceGlobeVisualTheme();
+setTimeout(enforceGlobeVisualTheme, 500);
+setTimeout(enforceGlobeVisualTheme, 1500);
 
 controls.addEventListener('start', () => {
   controls.autoRotate = false;
   clearTimeout(autoRotateTimer);
+  enforceGlobeVisualTheme();
 });
 
 controls.addEventListener('end', () => {
+  enforceGlobeVisualTheme();
   clearTimeout(autoRotateTimer);
   autoRotateTimer = setTimeout(() => {
     controls.autoRotate = true;
+    enforceGlobeVisualTheme();
   }, 2600);
 });
 
