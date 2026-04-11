@@ -134,7 +134,7 @@ if (typeof window.Globe !== 'function') {
 const globe = Globe({
   animateIn: false,
   rendererConfig: {
-    antialias: !isMobile,
+    antialias: true,
     alpha: true,
     powerPreference: 'high-performance'
   }
@@ -144,22 +144,22 @@ const globe = Globe({
   .bumpImageUrl(GLOBE_BUMP_URL)
   .showAtmosphere(true)
   .atmosphereColor(ART.rimHalo)
-  .atmosphereAltitude(0.055)
-  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
+  .atmosphereAltitude(0.068)
+  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.056 : 0.004))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(226, 192, 138, 0.22)'
-      : 'rgba(0, 0, 0, 0)'
+      ? 'rgba(226, 192, 138, 0.24)'
+      : 'rgba(74, 88, 112, 0.16)'
   )
   .polygonSideColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(154, 122, 74, 0.12)'
-      : 'rgba(0, 0, 0, 0)'
+      ? 'rgba(154, 122, 74, 0.18)'
+      : 'rgba(34, 45, 62, 0.08)'
   )
   .polygonStrokeColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(226, 192, 138, 0.72)'
-      : 'rgba(154, 122, 74, 0.24)'
+      ? 'rgba(226, 192, 138, 0.92)'
+      : 'rgba(201, 164, 106, 0.44)'
   )
   .polygonsTransitionDuration(0)
   .labelsData([])
@@ -174,29 +174,27 @@ const globe = Globe({
   .labelDotRadius(() => (isMobile ? 0.06 : 0.08))
   .labelAltitude(() => 0.048)
   .labelColor((d) => d?.color || 'rgba(231, 233, 239, 0.95)')
-  .labelResolution(isMobile ? 2 : 3)
+  .labelResolution(isMobile ? 4 : 8)
   .pointsData([])
   .pointLat((d) => d.lat)
   .pointLng((d) => d.lng)
   .pointAltitude((d) => d.altitude ?? 0.035)
   .pointRadius((d) => d.radius ?? 0.45)
   .pointColor((d) => d.color)
-  .pointResolution(isMobile ? 8 : 16)
+  .pointResolution(isMobile ? 12 : 22)
   .pathsData([])
   .pathPoints((d) => d.points)
   .pathPointLat((p) => p.lat)
   .pathPointLng((p) => p.lng)
   .pathColor((d) => {
     const altitude = Number(globe.pointOfView()?.altitude) || 2;
-    if (altitude > 1.74) return 'rgba(0,0,0,0)';
-    if (altitude > 1.45) return 'rgba(201, 164, 106, 0.12)';
-    return d.color;
+    const alpha = Math.max(0.08, Math.min(0.48, 0.62 - (altitude - 1) * 0.3));
+    return `rgba(201, 164, 106, ${alpha.toFixed(3)})`;
   })
   .pathStroke((d) => {
     const altitude = Number(globe.pointOfView()?.altitude) || 2;
-    if (altitude > 1.74) return 0;
-    if (altitude > 1.45) return Math.max(0.12, d.stroke * 0.62);
-    return d.stroke;
+    const scale = Math.max(0.35, Math.min(1, 1.15 - (altitude - 1) * 0.45));
+    return Math.max(0.1, d.stroke * scale);
   })
   .pathResolution(2)
   .ringsData([])
@@ -227,10 +225,12 @@ const htmlLabelsSupported = false;
 const controls = globe.controls();
 globe.pointOfView({ lat: 20, lng: 0, altitude: 1.84 }, 0);
 controls.autoRotate = true;
-controls.autoRotateSpeed = isMobile ? 0.08 : 0.12;
+controls.autoRotateSpeed = isMobile ? 0.055 : 0.085;
 controls.enablePan = false;
-controls.minDistance = 118;
-controls.maxDistance = 280;
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 112;
+controls.maxDistance = 255;
 
 if (typeof globe.polygonCapCurvatureResolution === 'function') {
   globe.polygonCapCurvatureResolution(isMobile ? 2 : 4);
@@ -243,7 +243,8 @@ if (typeof globe.showGraticules === 'function') {
 if (typeof globe.renderer === 'function') {
   const renderer = globe.renderer();
   if (renderer?.setPixelRatio) {
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 1.5));
+    const dpr = window.devicePixelRatio || 1;
+    renderer.setPixelRatio(Math.min(dpr, isMobile ? 1.6 : 2));
   }
 }
 
@@ -251,29 +252,39 @@ function enforceGlobeVisualTheme() {
   if (!(window.THREE && typeof globe.globeMaterial === 'function')) return;
 
   globe.globeImageUrl(GLOBE_TEXTURE_URL);
-  globe.globeMaterial(new THREE.MeshPhongMaterial({
-    color: ART.landA,
-    emissive: '#0a111d',
-    specular: ART.gold,
-    shininess: 18
-  }));
+  const globeMat = globe.globeMaterial?.();
+  if (globeMat) {
+    globeMat.color?.set?.('#5f7088');
+    globeMat.emissive?.set?.('#0b1220');
+    globeMat.specular?.set?.('#f0cd93');
+    globeMat.shininess = 34;
+    globeMat.bumpScale = 0.18;
+    globeMat.needsUpdate = true;
+  }
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
       color: ART.rimHalo,
-      opacity: 0.11,
+      opacity: 0.16,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.055);
+    globe.atmosphereAltitude(0.072);
   }
 
   if (typeof globe.renderer === 'function') {
     const renderer = globe.renderer();
     if (renderer) {
       renderer.toneMapping = window.THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = isMobile ? 1.03 : 1.08;
+      renderer.toneMappingExposure = isMobile ? 1.14 : 1.2;
       renderer.outputColorSpace = window.THREE.SRGBColorSpace;
+
+      const mat = globe.globeMaterial?.();
+      const maxAniso = renderer.capabilities?.getMaxAnisotropy?.() || 1;
+      if (mat?.map) {
+        mat.map.anisotropy = Math.min(8, maxAniso);
+        mat.map.needsUpdate = true;
+      }
     }
   }
 
@@ -429,7 +440,7 @@ async function initAdmin1Boundaries() {
 
     const geojson = await response.json();
     const features = Array.isArray(geojson?.features) ? geojson.features : [];
-    const stride = isMobile ? 3 : 2;
+    const stride = isMobile ? 5 : 4;
 
     const parsedPaths = [];
     const parsedCenters = [];
@@ -495,8 +506,8 @@ async function initAdmin1Boundaries() {
       }
     }
 
-    admin1Paths = parsedPaths.slice(0, isMobile ? 1400 : 2200);
-    admin1Centers = parsedCenters.slice(0, 1000);
+    admin1Paths = parsedPaths.slice(0, isMobile ? 520 : 980);
+    admin1Centers = parsedCenters.slice(0, isMobile ? 260 : 520);
     globe.pathsData(admin1Paths);
     refreshLabels(state.globeCenter);
   } catch {
@@ -562,7 +573,16 @@ function angularDistance(latA, lngA, latB, lngB) {
 }
 
 function buildLabelPoints(anchor = state.globeCenter) {
+  const altitude = Number(globe.pointOfView()?.altitude) || 2;
   const nearest = findNearestCountry(anchor.lat, anchor.lng);
+
+  const zoomProfile =
+    altitude <= 1.28
+      ? { countries: isMobile ? 14 : 22, cities: isMobile ? 7 : 12, states: isMobile ? 7 : 12, admin1: isMobile ? 11 : 18, maxLabels: isMobile ? 18 : 30, spacing: isMobile ? 0.2 : 0.16 }
+      : altitude <= 1.55
+        ? { countries: isMobile ? 12 : 18, cities: isMobile ? 5 : 8, states: isMobile ? 4 : 7, admin1: isMobile ? 6 : 10, maxLabels: isMobile ? 15 : 24, spacing: isMobile ? 0.24 : 0.19 }
+        : { countries: isMobile ? 8 : 12, cities: isMobile ? 3 : 6, states: isMobile ? 2 : 3, admin1: isMobile ? 3 : 6, maxLabels: isMobile ? 11 : 18, spacing: isMobile ? 0.3 : 0.24 };
+
   const major = countryCenters
     .filter((c) => MAJOR_LABEL_ISO.has(c.iso))
     .map((c) => ({ ...c, priority: 3, color: 'rgba(238, 247, 255, 0.96)' }));
@@ -575,7 +595,7 @@ function buildLabelPoints(anchor = state.globeCenter) {
       color: 'rgba(238, 247, 255, 0.96)'
     }))
     .sort((a, b) => a.dist - b.dist)
-    .slice(0, isMobile ? 16 : 28)
+    .slice(0, zoomProfile.countries)
     .map(({ dist, ...rest }) => rest);
 
   const citySlice = MAJOR_CITY_LABELS
@@ -589,7 +609,7 @@ function buildLabelPoints(anchor = state.globeCenter) {
       priority: 2.7
     }))
     .sort((a, b) => a.dist - b.dist)
-    .slice(0, isMobile ? 6 : 12)
+    .slice(0, zoomProfile.cities)
     .map(({ dist, ...rest }) => rest);
 
   const stateSlice = STATE_PROVINCE_LABELS
@@ -603,7 +623,7 @@ function buildLabelPoints(anchor = state.globeCenter) {
       priority: 2.4
     }))
     .sort((a, b) => a.dist - b.dist)
-    .slice(0, isMobile ? 5 : 9)
+    .slice(0, zoomProfile.states)
     .map(({ dist, ...rest }) => rest);
 
   const admin1Slice = admin1Centers
@@ -613,7 +633,7 @@ function buildLabelPoints(anchor = state.globeCenter) {
       priority: 2.15
     }))
     .sort((a, b) => a.dist - b.dist)
-    .slice(0, isMobile ? 8 : 14)
+    .slice(0, zoomProfile.admin1)
     .map(({ dist, ...rest }) => rest);
 
   const candidates = [...major, ...centerSlice, ...citySlice, ...stateSlice, ...admin1Slice];
@@ -643,7 +663,6 @@ function buildLabelPoints(anchor = state.globeCenter) {
   }
 
   const picked = [];
-  const spacing = isMobile ? 0.27 : 0.2;
   const ordered = [...uniq.values()].sort((a, b) => (b.priority || 1) - (a.priority || 1));
   const densityByIso = new Map();
 
@@ -657,14 +676,14 @@ function buildLabelPoints(anchor = state.globeCenter) {
   }
 
   for (const c of ordered) {
-    const tooClose = picked.some((p) => angularDistance(c.lat, c.lng, p.lat, p.lng) < spacing);
+    const tooClose = picked.some((p) => angularDistance(c.lat, c.lng, p.lat, p.lng) < zoomProfile.spacing);
     if (!tooClose) {
       const density = densityByIso.get(c.iso) || 0;
       const base = isMobile ? 0.7 : 0.82;
-      c.labelScale = Math.max(0.52, base - Math.min(0.22, density * 0.02));
+      c.labelScale = Math.max(0.5, base - Math.min(0.24, density * 0.02));
       picked.push(c);
     }
-    if (picked.length >= (isMobile ? 16 : 28)) break;
+    if (picked.length >= zoomProfile.maxLabels) break;
   }
 
   labelPoints = picked;
