@@ -136,11 +136,11 @@ const globe = Globe({
   }
 })(globeMount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('/vendor/earth-art-a.jpg')
+  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
   .showAtmosphere(true)
-  .atmosphereColor(ART.rimHalo)
-  .atmosphereAltitude(0.06)
+  .atmosphereColor('#334455')
+  .atmosphereAltitude(0.065)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
@@ -187,7 +187,6 @@ const globe = Globe({
     if (altitude > 1.62) return 'rgba(0,0,0,0)';
     return d.color;
   })
-  .pathAltitude(() => 0.004)
   .pathStroke((d) => {
     const altitude = Number(globe.pointOfView()?.altitude) || 2;
     if (altitude > 1.62) return 0;
@@ -245,22 +244,22 @@ if (typeof globe.renderer === 'function') {
 function enforceGlobeVisualTheme() {
   if (!(window.THREE && typeof globe.globeMaterial === 'function')) return;
 
-  globe.globeImageUrl('/vendor/earth-art-a.jpg');
+  globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
   globe.globeMaterial(new THREE.MeshPhongMaterial({
-    color: '#2b303a',
-    emissive: '#0b0f15',
-    specular: '#c9a46a',
-    shininess: 6
+    color: '#0a1f35',
+    emissive: '#0a1f35',
+    specular: '#334455',
+    shininess: 16
   }));
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: ART.rimHalo,
-      opacity: 0.12,
+      color: '#334455',
+      opacity: 0.1,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.06);
+    globe.atmosphereAltitude(0.065);
   }
 
   if (typeof globe.scene === 'function') {
@@ -268,22 +267,26 @@ function enforceGlobeVisualTheme() {
     if (scene?.traverse) {
       scene.traverse((obj) => {
         if (obj?.isAmbientLight) {
-          obj.color?.set?.(ART.textSub);
-          obj.intensity = 0.28;
+          obj.color?.set?.('#BFC5D3');
+          obj.intensity = 0.2;
         }
         if (obj?.isDirectionalLight) {
-          obj.color?.set?.(ART.rimCore);
-          obj.intensity = 0.62;
-          if (obj?.position?.set) obj.position.set(2.4, 1.5, -2.6);
+          obj.color?.set?.('#F2D8AE');
+          obj.intensity = 0.86;
+          if (obj?.position?.set) obj.position.set(2.8, 1.6, -2.8);
         }
       });
     }
 
     if (window.THREE && !scene.userData.cwnRimLight) {
-      const rim = new THREE.DirectionalLight(ART.rimHalo, 0.44);
-      rim.position.set(2.9, 1.1, -2.3);
+      const rim = new THREE.DirectionalLight('#E7C48A', 0.42);
+      rim.position.set(3.1, 1.2, -2.4);
       scene.add(rim);
       scene.userData.cwnRimLight = rim;
+    } else if (scene.userData.cwnRimLight) {
+      scene.userData.cwnRimLight.color?.set?.('#E7C48A');
+      scene.userData.cwnRimLight.intensity = 0.42;
+      scene.userData.cwnRimLight.position?.set?.(3.1, 1.2, -2.4);
     }
   }
 }
