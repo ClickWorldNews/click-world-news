@@ -86,7 +86,7 @@ const globe = Globe({
   }
 })(globeMount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('/vendor/earth-night-premium.jpg')
+  .globeImageUrl('/vendor/earth-night.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
   .showAtmosphere(false)
   .atmosphereColor('#0d121a')
@@ -127,7 +127,7 @@ const globe = Globe({
   .pointAltitude((d) => d.altitude ?? 0.035)
   .pointRadius((d) => d.radius ?? 0.45)
   .pointColor((d) => d.color)
-  .pointResolution(isMobile ? 14 : 24)
+  .pointResolution(isMobile ? 10 : 18)
   .ringsData([])
   .ringLat((d) => d.lat)
   .ringLng((d) => d.lng)
@@ -156,13 +156,13 @@ const htmlLabelsSupported = false;
 const controls = globe.controls();
 globe.pointOfView({ lat: 20, lng: 0, altitude: 2.05 }, 0);
 controls.autoRotate = true;
-controls.autoRotateSpeed = isMobile ? 0.08 : 0.12;
+controls.autoRotateSpeed = isMobile ? 0.16 : 0.22;
 controls.enablePan = false;
 controls.minDistance = 125;
 controls.maxDistance = 300;
 
 if (typeof globe.polygonCapCurvatureResolution === 'function') {
-  globe.polygonCapCurvatureResolution(isMobile ? 3 : 5);
+  globe.polygonCapCurvatureResolution(isMobile ? 2 : 4);
 }
 
 function enforceGlobeVisualTheme() {
@@ -173,11 +173,11 @@ function enforceGlobeVisualTheme() {
   if (typeof globe.globeMaterial === 'function' && window.THREE) {
     const material = globe.globeMaterial();
     if (material) {
-      material.color = new THREE.Color('#667282');
+      material.color = new THREE.Color('#c7d0dc');
       material.emissive = new THREE.Color('#000000');
-      material.emissiveIntensity = 0;
-      material.shininess = 0.6;
-      material.specular = new THREE.Color('#02050b');
+      material.emissiveIntensity = 0.02;
+      material.shininess = 1.8;
+      material.specular = new THREE.Color('#070c15');
       material.needsUpdate = true;
     }
   }
@@ -187,11 +187,11 @@ function enforceGlobeVisualTheme() {
     if (scene?.traverse) {
       scene.traverse((obj) => {
         if (obj?.isAmbientLight) {
-          obj.intensity = 0.34;
+          obj.intensity = 0.5;
           obj.color = new THREE.Color('#d5dbe3');
         }
         if (obj?.isDirectionalLight) {
-          obj.intensity = 0.46;
+          obj.intensity = 0.62;
           obj.color = new THREE.Color('#ffffff');
         }
       });
@@ -206,15 +206,12 @@ setTimeout(enforceGlobeVisualTheme, 1500);
 controls.addEventListener('start', () => {
   controls.autoRotate = false;
   clearTimeout(autoRotateTimer);
-  enforceGlobeVisualTheme();
 });
 
 controls.addEventListener('end', () => {
-  enforceGlobeVisualTheme();
   clearTimeout(autoRotateTimer);
   autoRotateTimer = setTimeout(() => {
     controls.autoRotate = true;
-    enforceGlobeVisualTheme();
   }, 2600);
 });
 
