@@ -4,99 +4,75 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Click World News</title>
-    <meta name="theme-color" content="#06080d" />
-    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#080713" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Click World News" />
-    <meta name="format-detection" content="telephone=no" />
-    <meta
-      name="description"
-      content="Tap-first world news globe with fast Drudge-style signal feed."
-    />
+    <meta name="description" content="Freestyle globe-first world news experience." />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
     <link rel="apple-touch-icon" href="icons/icon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css?v=20260411f" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css?v=20260411x" />
   </head>
   <body>
     <div id="app">
-      <header class="top-nav">
-        <div class="brand">
-          <span class="brand-dot" aria-hidden="true">◎</span>
-          <span class="brand-text">Click World News</span>
+      <div id="globe"></div>
+
+      <header class="glass topbar">
+        <div class="brand-wrap">
+          <span class="brand-orb"></span>
+          <div>
+            <h1>Click World News</h1>
+            <p>Freestyle Edition</p>
+          </div>
         </div>
-        <button id="open-search" class="icon-btn" aria-label="Search and saved pings">🔍</button>
+        <button id="open-search" class="icon-btn" aria-label="Open search">⌕</button>
       </header>
 
-      <main id="globe-stage">
-        <div id="globeViz"></div>
+      <section class="hud">
+        <div id="region-pill" class="glass pill">Region: World</div>
+        <div id="meta-pill" class="glass pill sub">Tap globe to drop signal</div>
+      </section>
 
-        <div id="status-banner" class="status-banner hidden"></div>
+      <button id="ping-btn" class="glass ping-btn" type="button">Signal</button>
 
-        <div class="overlay-top">
-          <div id="region-chip" class="chip">Region: World View</div>
-          <div id="detail-chip" class="chip sub">Tap globe to ping a location</div>
-        </div>
-
-        <div class="center-target" aria-hidden="true">
-          <span class="target-ring"></span>
-          <span class="target-dot"></span>
-        </div>
-
-        <button id="ping-center" class="ping-fab hidden" type="button" aria-label="Ping center">Ping</button>
-      </main>
-
-      <nav class="bottom-bar">
-        <button id="labels-toggle" class="bottom-btn" type="button">🗺 Labels</button>
-        <button id="open-signal" class="bottom-btn primary" type="button">Click News</button>
-        <div id="location-badge" class="location-badge">World View</div>
-      </nav>
+      <footer class="glass bottomdock">
+        <button id="labels-btn" class="dock-btn">Labels On</button>
+        <button id="news-btn" class="dock-btn primary">Open News</button>
+        <button id="world-btn" class="dock-btn">World View</button>
+      </footer>
     </div>
 
     <section id="feed-sheet" class="sheet hidden" aria-hidden="true">
-      <div class="sheet-handle"></div>
+      <div class="sheet-bar"></div>
       <div class="sheet-head">
-        <h2 id="feed-title">Click News · World</h2>
+        <h2 id="feed-title">World Headlines</h2>
         <div class="sheet-actions">
-          <button id="share-ping" class="sheet-btn share-small hidden" type="button">Share this Ping</button>
-          <button id="refresh-feed" class="sheet-btn" type="button">Refresh</button>
-          <button id="close-feed" class="sheet-btn" type="button">Close</button>
+          <button id="refresh-feed" class="sheet-btn">Refresh</button>
+          <button id="close-feed" class="sheet-btn">Close</button>
         </div>
       </div>
-      <div id="feed-loading" class="sheet-loading hidden">Fetching headlines…</div>
+      <div id="feed-loading" class="feed-loading hidden">Loading signal...</div>
       <ul id="feed-list" class="feed-list"></ul>
     </section>
 
     <section id="search-modal" class="modal hidden" aria-hidden="true">
       <div class="modal-card">
         <div class="modal-head">
-          <h3>Search & Saved Pings</h3>
-          <button id="close-search" class="sheet-btn" type="button">Close</button>
+          <h3>Find a place</h3>
+          <button id="close-search" class="sheet-btn">Close</button>
         </div>
-
         <div class="search-row">
-          <input id="search-input" type="text" placeholder="Search city, state, or country" />
-          <button id="search-submit" type="button">Find</button>
+          <input id="search-input" placeholder="City, state, or country" />
+          <button id="search-go" class="sheet-btn">Go</button>
         </div>
-
         <div id="search-results" class="search-results"></div>
-
-        <div class="saved-head">
-          <strong>Saved</strong>
-          <button id="clear-saved" class="sheet-btn" type="button">Clear</button>
-        </div>
-        <div id="saved-list" class="saved-list"></div>
       </div>
     </section>
 
-    <script src="/vendor/globe.gl.min.js?v=20260411f"></script>
-    <script defer src="app.js?v=20260411f"></script>
+    <script src="/vendor/globe.gl.min.js?v=20260411x"></script>
+    <script defer src="app.js?v=20260411x"></script>
   </body>
 </html>

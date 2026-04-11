@@ -1,1509 +1,534 @@
-const globeMount = document.getElementById('globeViz');
-const pingCenterBtn = document.getElementById('ping-center');
-const labelsToggleBtn = document.getElementById('labels-toggle');
-const openSignalBtn = document.getElementById('open-signal');
-const locationBadge = document.getElementById('location-badge');
-const regionChip = document.getElementById('region-chip');
-const detailChip = document.getElementById('detail-chip');
-const statusBanner = document.getElementById('status-banner');
+const $ = (id) => document.getElementById(id);
 
-const feedSheet = document.getElementById('feed-sheet');
-const feedTitle = document.getElementById('feed-title');
-const feedList = document.getElementById('feed-list');
-const feedLoading = document.getElementById('feed-loading');
-const closeFeedBtn = document.getElementById('close-feed');
-const refreshFeedBtn = document.getElementById('refresh-feed');
-const sharePingBtn = document.getElementById('share-ping');
-
-const openSearchBtn = document.getElementById('open-search');
-const closeSearchBtn = document.getElementById('close-search');
-const searchModal = document.getElementById('search-modal');
-const searchInput = document.getElementById('search-input');
-const searchSubmitBtn = document.getElementById('search-submit');
-const searchResults = document.getElementById('search-results');
-const savedList = document.getElementById('saved-list');
-const clearSavedBtn = document.getElementById('clear-saved');
-const sheetHandle = document.querySelector('.sheet-handle');
-
-const isMobile =
-  window.matchMedia('(hover: none), (pointer: coarse)').matches ||
-  window.innerWidth < 900;
-
-const STORAGE_KEY = 'click-world-saved-pings-v1';
-const FEED_CACHE_KEY = 'click-world-last-feed-v1';
-const DEMO_MODE = new URLSearchParams(window.location.search).get('demo');
-const ADMIN1_GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_1_states_provinces_lines.geojson';
-const MAJOR_LABEL_ISO = new Set([
-  'US', 'CA', 'MX', 'BR', 'AR', 'CL', 'CO', 'PE',
-  'GB', 'FR', 'DE', 'ES', 'IT', 'PL', 'UA', 'SE', 'NO', 'TR',
-  'RU', 'SA', 'AE', 'EG', 'NG', 'ZA', 'KE',
-  'IN', 'CN', 'JP', 'KR', 'ID', 'TH', 'VN', 'PH', 'PK', 'BD',
-  'AU', 'NZ'
-]);
-
-const NAME_OVERRIDES = {
-  US: 'United States',
-  GB: 'United Kingdom',
-  AE: 'UAE'
+const els = {
+  mount: $('globe'),
+  region: $('region-pill'),
+  meta: $('meta-pill'),
+  ping: $('ping-btn'),
+  labels: $('labels-btn'),
+  openNews: $('news-btn'),
+  world: $('world-btn'),
+  feedSheet: $('feed-sheet'),
+  feedTitle: $('feed-title'),
+  feedList: $('feed-list'),
+  feedLoading: $('feed-loading'),
+  closeFeed: $('close-feed'),
+  refreshFeed: $('refresh-feed'),
+  openSearch: $('open-search'),
+  closeSearch: $('close-search'),
+  searchModal: $('search-modal'),
+  searchInput: $('search-input'),
+  searchGo: $('search-go'),
+  searchResults: $('search-results')
 };
-
-const ART = {
-  oceanA: '#070B16',
-  oceanB: '#0C1224',
-  oceanC: '#161C2F',
-  landA: '#2D3A52',
-  landB: '#4A5870',
-  landHi: '#D9E1EE',
-  amber: '#C9A46A',
-  amberHi: '#E2C08A',
-  rimCore: '#8FA8D4',
-  rimHalo: '#5B79B2',
-  text: '#E7E9EF',
-  textSub: '#BFC5D3'
-};
-
-const GLOBE_TEXTURE_URL = '//unpkg.com/three-globe/example/img/earth-blue-marble.jpg';
-const GLOBE_BUMP_URL = '/vendor/earth-topology.png';
-const ASSET_VERSION = '20260411f';
-const USE_ADMIN_BOUNDARIES = false;
-
-const MAJOR_CITY_LABELS = [
-  { label: 'New York', lat: 40.7128, lng: -74.0060, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'Los Angeles', lat: 34.0522, lng: -118.2437, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'London', lat: 51.5072, lng: -0.1276, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'Paris', lat: 48.8566, lng: 2.3522, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'Istanbul', lat: 41.0082, lng: 28.9784, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'Dubai', lat: 25.2048, lng: 55.2708, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'Tokyo', lat: 35.6764, lng: 139.6500, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'Seoul', lat: 37.5665, lng: 126.9780, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'Mumbai', lat: 19.0760, lng: 72.8777, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'Singapore', lat: 1.3521, lng: 103.8198, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'Sydney', lat: -33.8688, lng: 151.2093, color: 'rgba(255, 221, 166, 0.96)' },
-  { label: 'São Paulo', lat: -23.5505, lng: -46.6333, color: 'rgba(255, 221, 166, 0.96)' }
-];
-
-const STATE_PROVINCE_LABELS = [
-  { label: 'California', lat: 36.7783, lng: -119.4179, color: 'rgba(240, 248, 255, 0.95)' },
-  { label: 'Texas', lat: 31.9686, lng: -99.9018, color: 'rgba(240, 248, 255, 0.95)' },
-  { label: 'Florida', lat: 27.6648, lng: -81.5158, color: 'rgba(240, 248, 255, 0.95)' },
-  { label: 'New York State', lat: 42.9538, lng: -75.5268, color: 'rgba(240, 248, 255, 0.95)' },
-  { label: 'Ontario', lat: 50.0000, lng: -85.0000, color: 'rgba(240, 248, 255, 0.95)' },
-  { label: 'Quebec', lat: 52.9399, lng: -73.5491, color: 'rgba(240, 248, 255, 0.95)' },
-  { label: 'British Columbia', lat: 53.7267, lng: -127.6476, color: 'rgba(240, 248, 255, 0.95)' },
-  { label: 'Bavaria', lat: 48.7904, lng: 11.4979, color: 'rgba(240, 248, 255, 0.95)' },
-  { label: 'Catalonia', lat: 41.5912, lng: 1.5209, color: 'rgba(240, 248, 255, 0.95)' },
-  { label: 'Maharashtra', lat: 19.7515, lng: 75.7139, color: 'rgba(240, 248, 255, 0.95)' },
-  { label: 'New South Wales', lat: -31.2532, lng: 146.9211, color: 'rgba(240, 248, 255, 0.95)' }
-];
 
 const state = {
-  globeCenter: { lat: 20, lng: 0 },
-  selectedLocation: {
-    type: 'world',
-    code: '',
-    name: 'World View',
-    latlng: { lat: 20, lng: 0 }
-  },
+  selected: { type: 'world', name: 'World', code: '', lat: 20, lng: 0 },
+  labelsOn: true,
   feed: [],
-  isLoadingFeed: false,
-  labelsVisible: true,
-  savedPings: [],
-  mode: 'globe',
-  feedScope: 'global',
-  lastFetchTimestamp: 0,
-  lastLabelRefresh: 0
+  centers: [],
+  byIso: new Map(),
+  polygons: [],
+  loading: false,
+  lastLoader: null,
+  activeReq: 0
 };
 
-let polygons = [];
-let countryCenters = [];
-let countryCenterByIso = new Map();
-let admin1Paths = [];
-let admin1Centers = [];
-let labelPoints = [];
-let activeRequest = 0;
-let centerTimer = null;
-let autoRotateTimer = null;
-let lastFeedLoader = null;
-let activeFetchController = null;
-let isInteracting = false;
-
 if (typeof window.Globe !== 'function') {
-  showStatus('Globe engine failed to load. Refresh once or switch network.');
-  throw new Error('Globe library unavailable');
+  throw new Error('Globe.gl not loaded');
 }
 
 const globe = Globe({
   animateIn: false,
-  rendererConfig: {
-    antialias: true,
-    alpha: true,
-    powerPreference: 'high-performance'
-  }
-})(globeMount)
+  rendererConfig: { antialias: true, alpha: true, powerPreference: 'high-performance' }
+})(els.mount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl(`${GLOBE_TEXTURE_URL}?v=${ASSET_VERSION}`)
-  .bumpImageUrl(`${GLOBE_BUMP_URL}?v=${ASSET_VERSION}`)
+  .globeImageUrl('/vendor/earth-art-a.jpg?v=20260411x')
+  .bumpImageUrl('/vendor/earth-topology.png?v=20260411x')
   .showAtmosphere(true)
-  .atmosphereColor('#8ca4c8')
-  .atmosphereAltitude(0.056)
-  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.046 : 0.0012))
+  .atmosphereColor('#a083ff')
+  .atmosphereAltitude(0.078)
+  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selected.code ? 0.052 : 0.004))
   .polygonCapColor((f) =>
-    f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(226, 192, 138, 0.14)'
-      : 'rgba(16, 22, 34, 0.06)'
+    f?.properties?.ISO_A2 === state.selected.code
+      ? 'rgba(255, 110, 199, 0.26)'
+      : 'rgba(16, 16, 32, 0.10)'
   )
   .polygonSideColor((f) =>
-    f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(154, 122, 74, 0.16)'
-      : 'rgba(10, 16, 28, 0.04)'
+    f?.properties?.ISO_A2 === state.selected.code
+      ? 'rgba(155, 123, 255, 0.30)'
+      : 'rgba(10, 9, 22, 0.08)'
   )
   .polygonStrokeColor((f) =>
-    f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(248, 226, 188, 0.88)'
-      : 'rgba(194, 208, 236, 0.14)'
+    f?.properties?.ISO_A2 === state.selected.code
+      ? 'rgba(255, 203, 238, 0.98)'
+      : 'rgba(198, 175, 255, 0.22)'
   )
-  .polygonsTransitionDuration(0)
   .labelsData([])
   .labelLat((d) => d.lat)
   .labelLng((d) => d.lng)
   .labelText((d) => d.label)
-  .labelSize((d) => {
-    const altitude = Number(globe.pointOfView()?.altitude) || 2;
-    const base = d?.labelScale ?? (isMobile ? 0.64 : 0.74);
-    return Math.max(0.46, base - Math.max(0, altitude - 1.2) * 0.16);
-  })
-  .labelDotRadius(() => (isMobile ? 0.06 : 0.08))
-  .labelAltitude(() => 0.048)
-  .labelColor((d) => d?.color || 'rgba(230, 237, 247, 0.96)')
-  .labelResolution(isMobile ? 4 : 8)
+  .labelSize((d) => d.size || 0.7)
+  .labelDotRadius(() => 0.08)
+  .labelAltitude(() => 0.028)
+  .labelColor((d) => d.color || 'rgba(248,240,255,0.95)')
   .pointsData([])
   .pointLat((d) => d.lat)
   .pointLng((d) => d.lng)
-  .pointAltitude((d) => d.altitude ?? 0.035)
-  .pointRadius((d) => d.radius ?? 0.45)
+  .pointRadius((d) => d.radius)
+  .pointAltitude((d) => d.altitude)
   .pointColor((d) => d.color)
-  .pointResolution(isMobile ? 12 : 22)
-  .pathsData([])
-  .pathPoints((d) => d.points)
-  .pathPointLat((p) => p.lat)
-  .pathPointLng((p) => p.lng)
-  .pathColor((d) => {
-    const altitude = Number(globe.pointOfView()?.altitude) || 2;
-    const alpha = Math.max(0.09, Math.min(0.44, 0.56 - (altitude - 1) * 0.28));
-    return `rgba(201, 164, 106, ${alpha.toFixed(3)})`;
-  })
-  .pathStroke((d) => {
-    const altitude = Number(globe.pointOfView()?.altitude) || 2;
-    const scale = Math.max(0.35, Math.min(1, 1.15 - (altitude - 1) * 0.45));
-    return Math.max(0.1, d.stroke * scale);
-  })
-  .pathResolution(2)
   .ringsData([])
   .ringLat((d) => d.lat)
   .ringLng((d) => d.lng)
   .ringColor((d) => (t) => (t < 1 ? d.color : 'transparent'))
-  .ringMaxRadius((d) => d.maxRadius ?? 3.2)
-  .ringPropagationSpeed((d) => d.speed ?? 0.9)
-  .ringRepeatPeriod((d) => d.repeatPeriod ?? 1400)
-  .onPolygonClick((feat) => {
-    const iso = feat?.properties?.ISO_A2;
-    const name = feat?.properties?.ADMIN || feat?.properties?.NAME || iso;
-    if (!iso || iso === '-99') return;
-
-    const center = countryCenterByIso.get(iso) || getFeatureCenter(feat);
+  .ringMaxRadius((d) => d.max)
+  .ringPropagationSpeed((d) => d.speed)
+  .ringRepeatPeriod((d) => d.period)
+  .onPolygonClick((feature) => {
+    const iso = feature?.properties?.ISO_A2;
+    if (!iso) return;
+    const name = feature?.properties?.ADMIN || iso;
+    const center = state.byIso.get(iso);
     if (!center) return;
-
-    selectCountry(iso, name, center.lat, center.lng);
+    selectCountry({ iso, name, lat: center.lat, lng: center.lng });
   })
   .onGlobeClick((coords) => {
     if (!coords) return;
-    pingAt(coords.lat, coords.lng, '', '');
+    pingAt(coords.lat, coords.lng);
   });
 
-// Keep labels fully in WebGL (more stable on mobile than heavy HTML overlays).
-const htmlLabelsSupported = false;
+if (typeof globe.showGraticules === 'function') globe.showGraticules(false);
+if (typeof globe.polygonCapCurvatureResolution === 'function') globe.polygonCapCurvatureResolution(3);
 
 const controls = globe.controls();
-globe.pointOfView({ lat: 20, lng: 0, altitude: 1.84 }, 0);
 controls.autoRotate = true;
-controls.autoRotateSpeed = isMobile ? 0.05 : 0.078;
+controls.autoRotateSpeed = 0.18;
 controls.enablePan = false;
 controls.enableDamping = true;
-controls.dampingFactor = isMobile ? 0.1 : 0.085;
-controls.rotateSpeed = isMobile ? 0.72 : 0.85;
-controls.zoomSpeed = isMobile ? 0.85 : 0.92;
-controls.minDistance = 112;
+controls.dampingFactor = 0.09;
+controls.rotateSpeed = 0.9;
+controls.zoomSpeed = 0.92;
+controls.minDistance = 105;
 controls.maxDistance = 255;
 
-if (typeof globe.polygonCapCurvatureResolution === 'function') {
-  globe.polygonCapCurvatureResolution(isMobile ? 2 : 4);
-}
+globe.pointOfView({ lat: 20, lng: 0, altitude: 1.85 }, 0);
 
-if (typeof globe.showGraticules === 'function') {
-  globe.showGraticules(false);
-}
-
-if (typeof globe.renderer === 'function') {
-  const renderer = globe.renderer();
-  if (renderer?.setPixelRatio) {
-    const dpr = window.devicePixelRatio || 1;
-    renderer.setPixelRatio(Math.min(dpr, isMobile ? 1.6 : 2));
-  }
-}
-
-function enforceGlobeVisualTheme() {
-  if (!(window.THREE && typeof globe.globeMaterial === 'function')) return;
-
-  globe.globeImageUrl(`${GLOBE_TEXTURE_URL}?v=${ASSET_VERSION}`);
-  const globeMat = globe.globeMaterial?.();
-  if (globeMat) {
-    globeMat.color?.set?.('#f8fbff');
-    globeMat.emissive?.set?.('#060b14');
-    globeMat.specular?.set?.('#e7c38e');
-    globeMat.shininess = 18;
-    globeMat.bumpScale = 0.28;
-    globeMat.needsUpdate = true;
+function styleScene() {
+  if (!(window.THREE && typeof globe.scene === 'function')) return;
+  const renderer = globe.renderer?.();
+  if (renderer) {
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
   }
 
-  if (typeof globe.atmosphereMaterial === 'function') {
-    globe.showAtmosphere(true);
-    globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: '#8ea5c9',
-      opacity: 0.12,
-      transparent: true
-    }));
-    globe.atmosphereAltitude(0.054);
+  const mat = globe.globeMaterial?.();
+  if (mat) {
+    mat.color?.set?.('#f7f6ff');
+    mat.emissive?.set?.('#060613');
+    mat.specular?.set?.('#ccb8ff');
+    mat.shininess = 18;
+    mat.bumpScale = 0.28;
+    mat.needsUpdate = true;
   }
 
-  if (typeof globe.renderer === 'function') {
-    const renderer = globe.renderer();
-    if (renderer) {
-      renderer.toneMapping = window.THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = isMobile ? 1.04 : 1.08;
-      renderer.outputColorSpace = window.THREE.SRGBColorSpace;
-
-      const mat = globe.globeMaterial?.();
-      const maxAniso = renderer.capabilities?.getMaxAnisotropy?.() || 1;
-      if (mat?.map) {
-        mat.map.anisotropy = Math.min(8, maxAniso);
-        mat.map.needsUpdate = true;
-      }
+  const scene = globe.scene();
+  scene.traverse((obj) => {
+    if (obj?.isAmbientLight) {
+      obj.color?.set?.('#c1b0ff');
+      obj.intensity = 0.18;
     }
+    if (obj?.isDirectionalLight) {
+      obj.color?.set?.('#d4e4ff');
+      obj.intensity = 0.82;
+      obj.position?.set?.(2.7, 1.9, -2.5);
+    }
+  });
+
+  if (!scene.userData.magentaRim) {
+    const rim = new THREE.DirectionalLight('#ff80ce', 0.34);
+    rim.position.set(-2.9, 1.0, 2.4);
+    scene.add(rim);
+    scene.userData.magentaRim = rim;
   }
 
-  if (typeof globe.scene === 'function') {
-    const scene = globe.scene();
-    if (scene?.traverse) {
-      scene.traverse((obj) => {
-        if (obj?.isAmbientLight) {
-          obj.color?.set?.('#a8b7d4');
-          obj.intensity = 0.12;
-        }
-        if (obj?.isDirectionalLight) {
-          obj.color?.set?.('#d8e4f7');
-          obj.intensity = 0.84;
-          if (obj?.position?.set) obj.position.set(2.8, 1.8, -2.5);
-        }
-      });
-    }
-
-    if (window.THREE && !scene.userData.cwnRimLight) {
-      const rim = new THREE.DirectionalLight('#e1bf8a', 0.34);
-      rim.position.set(3.2, 1.25, -2.1);
-      scene.add(rim);
-      scene.userData.cwnRimLight = rim;
-    } else if (scene.userData.cwnRimLight) {
-      scene.userData.cwnRimLight.color?.set?.('#e1bf8a');
-      scene.userData.cwnRimLight.intensity = 0.34;
-      scene.userData.cwnRimLight.position?.set?.(3.2, 1.25, -2.1);
-    }
+  if (!scene.userData.cyanRim) {
+    const rim2 = new THREE.DirectionalLight('#72dcff', 0.20);
+    rim2.position.set(2.4, -0.4, 2.1);
+    scene.add(rim2);
+    scene.userData.cyanRim = rim2;
   }
 }
 
-enforceGlobeVisualTheme();
-setTimeout(enforceGlobeVisualTheme, 500);
-setTimeout(enforceGlobeVisualTheme, 1500);
-
-controls.addEventListener('start', () => {
-  isInteracting = true;
-  controls.autoRotate = false;
-  clearTimeout(autoRotateTimer);
-});
-
-controls.addEventListener('end', () => {
-  isInteracting = false;
-  enforceGlobeVisualTheme();
-  clearTimeout(autoRotateTimer);
-  autoRotateTimer = setTimeout(() => {
-    controls.autoRotate = true;
-    enforceGlobeVisualTheme();
-  }, 2600);
-});
-
-function showStatus(text) {
-  statusBanner.textContent = text;
-  statusBanner.classList.remove('hidden');
+function resize() {
+  globe.width(els.mount.clientWidth || window.innerWidth);
+  globe.height(els.mount.clientHeight || window.innerHeight);
 }
 
-function hideStatus() {
-  statusBanner.classList.add('hidden');
-}
-
-function setLoading(flag) {
-  state.isLoadingFeed = flag;
-  feedLoading.classList.toggle('hidden', !flag);
-}
-
-function toDate(value) {
-  if (!value) return 'just now';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return 'just now';
-  return d.toLocaleString();
-}
-
-function normalizeFeature(feature) {
-  const p = feature?.properties || {};
-  const iso = String(p.ISO_A2 || p['ISO3166-1-Alpha-2'] || p.iso_a2 || p.iso2 || '').trim().toUpperCase();
-  if (!/^[A-Z]{2}$/.test(iso) || iso === '-99') return null;
-
-  const name = String(p.ADMIN || p.NAME || p.name || p.NAME_EN || iso).trim();
-
-  return {
-    ...feature,
-    properties: {
-      ...p,
-      ISO_A2: iso,
-      ADMIN: name,
-      NAME: name
-    }
-  };
-}
-
-function getFeatureCenter(feature) {
+function centerOfFeature(feature) {
   const coords = [];
-
   const walk = (node) => {
     if (!Array.isArray(node)) return;
     if (typeof node[0] === 'number' && typeof node[1] === 'number') {
-      coords.push([node[0], node[1]]);
+      coords.push(node);
       return;
     }
     node.forEach(walk);
   };
-
   walk(feature?.geometry?.coordinates);
   if (!coords.length) return null;
 
-  const lat = coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
-  const sinLng = coords.reduce((sum, c) => sum + Math.sin((c[0] * Math.PI) / 180), 0);
-  const cosLng = coords.reduce((sum, c) => sum + Math.cos((c[0] * Math.PI) / 180), 0);
-  const lng = (Math.atan2(sinLng / coords.length, cosLng / coords.length) * 180) / Math.PI;
-
+  const lat = coords.reduce((s, c) => s + c[1], 0) / coords.length;
+  const sin = coords.reduce((s, c) => s + Math.sin((c[0] * Math.PI) / 180), 0) / coords.length;
+  const cos = coords.reduce((s, c) => s + Math.cos((c[0] * Math.PI) / 180), 0) / coords.length;
+  const lng = (Math.atan2(sin, cos) * 180) / Math.PI;
   return { lat, lng };
 }
 
-function simplifyLineCoords(coords = [], stride = 1) {
-  const out = [];
-  const step = Math.max(1, stride);
-  for (let i = 0; i < coords.length; i += step) {
-    const c = coords[i];
-    if (!Array.isArray(c) || c.length < 2) continue;
-    const lng = Number(c[0]);
-    const lat = Number(c[1]);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-    out.push({ lat, lng });
-  }
-  if (coords.length) {
-    const last = coords[coords.length - 1];
-    if (Array.isArray(last) && last.length >= 2) {
-      const lng = Number(last[0]);
-      const lat = Number(last[1]);
-      const prev = out[out.length - 1];
-      if (Number.isFinite(lat) && Number.isFinite(lng) && (!prev || prev.lat !== lat || prev.lng !== lng)) {
-        out.push({ lat, lng });
-      }
-    }
-  }
-  return out;
-}
-
-function meanCoord(points = []) {
-  if (!points.length) return null;
-  const lat = points.reduce((sum, p) => sum + p.lat, 0) / points.length;
-  const sinLng = points.reduce((sum, p) => sum + Math.sin((p.lng * Math.PI) / 180), 0);
-  const cosLng = points.reduce((sum, p) => sum + Math.cos((p.lng * Math.PI) / 180), 0);
-  const lng = (Math.atan2(sinLng / points.length, cosLng / points.length) * 180) / Math.PI;
-  return { lat, lng };
-}
-
-async function initAdmin1Boundaries() {
-  try {
-    const response = await fetch(ADMIN1_GEOJSON_URL, { cache: 'force-cache' });
-    if (!response.ok) return;
-
-    const geojson = await response.json();
-    const features = Array.isArray(geojson?.features) ? geojson.features : [];
-    const stride = isMobile ? 5 : 4;
-
-    const parsedPaths = [];
-    const parsedCenters = [];
-
-    for (const feature of features) {
-      const props = feature?.properties || {};
-      const label = String(
-        props.name_en || props.name || props.woe_name || props.gn_name || props.name_alt || ''
-      ).trim();
-      const geom = feature?.geometry || {};
-      const type = geom?.type;
-      const coords = geom?.coordinates;
-
-      if (!label || !coords) continue;
-
-      if (type === 'LineString') {
-        const points = simplifyLineCoords(coords, stride);
-        if (points.length < 2) continue;
-
-        parsedPaths.push({
-          points,
-          stroke: isMobile ? 0.32 : 0.42,
-          color: 'rgba(201, 164, 106, 0.24)'
-        });
-
-        const center = meanCoord(points);
-        if (center) {
-          parsedCenters.push({
-            iso: `ADM1:${label}:${parsedCenters.length}`,
-            label,
-            lat: center.lat,
-            lng: center.lng,
-            color: 'rgba(191, 197, 211, 0.9)'
-          });
-        }
-      }
-
-      if (type === 'MultiLineString') {
-        const lines = Array.isArray(coords) ? coords : [];
-        for (const line of lines) {
-          const points = simplifyLineCoords(line, stride);
-          if (points.length < 2) continue;
-
-          parsedPaths.push({
-            points,
-            stroke: isMobile ? 0.3 : 0.38,
-            color: 'rgba(154, 122, 74, 0.2)'
-          });
-        }
-
-        const firstLine = lines.find((line) => Array.isArray(line) && line.length >= 2) || [];
-        const firstPoints = simplifyLineCoords(firstLine, stride);
-        const center = meanCoord(firstPoints);
-        if (center) {
-          parsedCenters.push({
-            iso: `ADM1:${label}:${parsedCenters.length}`,
-            label,
-            lat: center.lat,
-            lng: center.lng,
-            color: 'rgba(191, 197, 211, 0.9)'
-          });
-        }
-      }
-    }
-
-    admin1Paths = parsedPaths.slice(0, isMobile ? 520 : 980);
-    admin1Centers = parsedCenters.slice(0, isMobile ? 260 : 520);
-    globe.pathsData(admin1Paths);
-    refreshLabels(state.globeCenter);
-  } catch {
-    // Admin-1 boundaries are optional enhancement; keep app functional if source unavailable.
-  }
-}
-
-function buildCountryCenters() {
-  countryCenterByIso = new Map();
-  countryCenters = polygons
-    .map((f) => {
-      const center = getFeatureCenter(f);
-      if (!center) return null;
-      const iso = f?.properties?.ISO_A2;
-      const name = f?.properties?.ADMIN || f?.properties?.NAME || iso;
-      return {
-        iso,
-        name,
-        label: NAME_OVERRIDES[iso] || name,
-        lat: center.lat,
-        lng: center.lng
-      };
-    })
-    .filter(Boolean);
-
-  for (const c of countryCenters) {
-    countryCenterByIso.set(c.iso, { lat: c.lat, lng: c.lng });
-  }
-}
-
-function findNearestCountry(lat, lng) {
-  let best = null;
-  let bestScore = Infinity;
-
-  for (const item of countryCenters) {
-    const latDelta = Math.abs(item.lat - lat);
-    const lngDelta = Math.abs((((item.lng - lng) + 540) % 360) - 180);
-    const score = latDelta * latDelta + lngDelta * lngDelta;
-    if (score < bestScore) {
-      bestScore = score;
-      best = item;
-    }
-  }
-
-  return best;
-}
-
-function findFeatureByIso(iso) {
-  return polygons.find((f) => f?.properties?.ISO_A2 === iso) || null;
-}
-
-function angularDistance(latA, lngA, latB, lngB) {
+function angularDistance(aLat, aLng, bLat, bLng) {
   const toRad = (v) => (v * Math.PI) / 180;
-  const aLat = toRad(latA);
-  const bLat = toRad(latB);
-  const dLat = bLat - aLat;
-  const dLng = toRad(lngB - lngA);
-
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(aLat) * Math.cos(bLat) * Math.sin(dLng / 2) ** 2;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const lat1 = toRad(aLat);
+  const lat2 = toRad(bLat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
   return 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
-function buildLabelPoints(anchor = state.globeCenter) {
-  const altitude = Number(globe.pointOfView()?.altitude) || 2;
-  const nearest = findNearestCountry(anchor.lat, anchor.lng);
+function nearestCountry(lat, lng) {
+  let best = null;
+  let score = Infinity;
+  for (const c of state.centers) {
+    const d = angularDistance(lat, lng, c.lat, c.lng);
+    if (d < score) {
+      score = d;
+      best = c;
+    }
+  }
+  return best;
+}
 
-  const zoomProfile =
-    altitude <= 1.28
-      ? { countries: isMobile ? 10 : 18, cities: isMobile ? 5 : 10, states: isMobile ? 4 : 9, admin1: isMobile ? 6 : 12, maxLabels: isMobile ? 14 : 26, spacing: isMobile ? 0.24 : 0.18 }
-      : altitude <= 1.55
-        ? { countries: isMobile ? 8 : 14, cities: isMobile ? 3 : 7, states: isMobile ? 2 : 5, admin1: isMobile ? 3 : 7, maxLabels: isMobile ? 11 : 20, spacing: isMobile ? 0.28 : 0.22 }
-        : { countries: isMobile ? 6 : 10, cities: isMobile ? 2 : 5, states: isMobile ? 1 : 2, admin1: isMobile ? 2 : 4, maxLabels: isMobile ? 8 : 14, spacing: isMobile ? 0.34 : 0.27 };
+function updateHud(text = '') {
+  const pov = globe.pointOfView();
+  const band = pov.altitude <= 1.35 ? 'Local zoom' : pov.altitude <= 1.65 ? 'Country zoom' : 'World zoom';
+  const lat = Number(pov.lat || 0).toFixed(2);
+  const lng = Number(pov.lng || 0).toFixed(2);
+  els.meta.textContent = text || `${band} • ${lat}, ${lng}`;
 
-  const major = countryCenters
-    .filter((c) => MAJOR_LABEL_ISO.has(c.iso))
-    .map((c) => ({ ...c, priority: 3, color: 'rgba(238, 247, 255, 0.96)' }));
+  if (state.selected.type === 'world') {
+    const near = nearestCountry(Number(pov.lat || 0), Number(pov.lng || 0));
+    els.region.textContent = near ? `Region: ${near.name}` : 'Region: Open Ocean';
+  }
+}
 
-  const centerSlice = countryCenters
-    .map((c) => ({
-      ...c,
-      dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng),
-      priority: 2,
-      color: 'rgba(238, 247, 255, 0.96)'
-    }))
-    .sort((a, b) => a.dist - b.dist)
-    .slice(0, zoomProfile.countries)
-    .map(({ dist, ...rest }) => rest);
-
-  const citySlice = MAJOR_CITY_LABELS
-    .map((c) => ({
-      iso: `CITY:${c.label}`,
-      label: c.label,
-      lat: c.lat,
-      lng: c.lng,
-      color: c.color,
-      dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng),
-      priority: 2.7
-    }))
-    .sort((a, b) => a.dist - b.dist)
-    .slice(0, zoomProfile.cities)
-    .map(({ dist, ...rest }) => rest);
-
-  const stateSlice = STATE_PROVINCE_LABELS
-    .map((c) => ({
-      iso: `STATE:${c.label}`,
-      label: c.label,
-      lat: c.lat,
-      lng: c.lng,
-      color: c.color,
-      dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng),
-      priority: 2.4
-    }))
-    .sort((a, b) => a.dist - b.dist)
-    .slice(0, zoomProfile.states)
-    .map(({ dist, ...rest }) => rest);
-
-  const admin1Slice = admin1Centers
-    .map((c) => ({
-      ...c,
-      dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng),
-      priority: 2.15
-    }))
-    .sort((a, b) => a.dist - b.dist)
-    .slice(0, zoomProfile.admin1)
-    .map(({ dist, ...rest }) => rest);
-
-  const candidates = [...major, ...centerSlice, ...citySlice, ...stateSlice, ...admin1Slice];
-
-  if (state.selectedLocation.code) {
-    const selected = countryCenters.find((c) => c.iso === state.selectedLocation.code);
-    if (selected) candidates.push({ ...selected, priority: 5, color: 'rgba(255, 221, 166, 0.98)' });
+function refreshLabels() {
+  if (!state.labelsOn) {
+    globe.labelsData([]);
+    return;
   }
 
-  if (nearest) candidates.push({ ...nearest, priority: 4, color: 'rgba(245, 251, 255, 0.98)' });
+  const pov = globe.pointOfView();
+  const lat = Number(pov.lat || 0);
+  const lng = Number(pov.lng || 0);
+  const altitude = Number(pov.altitude || 2);
+  const count = altitude <= 1.35 ? 12 : altitude <= 1.65 ? 9 : 6;
 
-  if (state.selectedLocation?.latlng && state.selectedLocation?.name && state.selectedLocation.type !== 'world') {
-    candidates.push({
-      iso: `PIN:${state.selectedLocation.code || 'XX'}`,
-      label: state.selectedLocation.name,
-      lat: Number(state.selectedLocation.latlng.lat),
-      lng: Number(state.selectedLocation.latlng.lng),
-      priority: 6,
-      color: 'rgba(255, 221, 166, 0.98)'
+  const picks = [...state.centers]
+    .map((c) => ({ ...c, d: angularDistance(lat, lng, c.lat, c.lng) }))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, count)
+    .map(({ d, ...c }) => ({ label: c.label, lat: c.lat, lng: c.lng, color: 'rgba(248,240,255,0.94)', size: 0.68 }));
+
+  if (state.selected.type !== 'world') {
+    picks.push({
+      label: state.selected.name,
+      lat: state.selected.lat,
+      lng: state.selected.lng,
+      color: 'rgba(255,216,240,0.98)',
+      size: 0.82
     });
   }
 
-  const uniq = new Map();
-  for (const c of candidates) {
-    const key = `${c.iso}:${Number(c.lat).toFixed(2)}:${Number(c.lng).toFixed(2)}`;
-    if (!uniq.has(key)) uniq.set(key, c);
-  }
-
-  const picked = [];
-  const ordered = [...uniq.values()].sort((a, b) => (b.priority || 1) - (a.priority || 1));
-  const densityByIso = new Map();
-
-  for (const c of ordered) {
-    let nearby = 0;
-    for (const x of ordered) {
-      if (c === x) continue;
-      if (angularDistance(c.lat, c.lng, x.lat, x.lng) < (isMobile ? 0.3 : 0.22)) nearby += 1;
-    }
-    densityByIso.set(c.iso, nearby);
-  }
-
-  for (const c of ordered) {
-    const tooClose = picked.some((p) => angularDistance(c.lat, c.lng, p.lat, p.lng) < zoomProfile.spacing);
-    if (!tooClose) {
-      const density = densityByIso.get(c.iso) || 0;
-      const base = isMobile ? 0.7 : 0.82;
-      c.labelScale = Math.max(0.5, base - Math.min(0.24, density * 0.02));
-      picked.push(c);
-    }
-    if (picked.length >= zoomProfile.maxLabels) break;
-  }
-
-  labelPoints = picked;
+  globe.labelsData(picks);
 }
 
-function applyLabels() {
-  const labels = state.labelsVisible ? labelPoints : [];
-  globe.labelsData(labels);
-  if (htmlLabelsSupported) {
-    globe.htmlElementsData(labels);
-  }
-}
-
-function refreshLabels(anchor = state.globeCenter) {
-  buildLabelPoints(anchor);
-  applyLabels();
-}
-
-function updateSelectedCountry(iso) {
-  state.selectedLocation.code = iso || '';
-  refreshLabels(state.globeCenter);
-}
-
-function setPingVisual(lat, lng, color = '#f59e0b', countryCenter = null) {
-  const ringPayload = [
-    {
-      lat,
-      lng,
-      color: 'rgba(201, 164, 106, 0.22)',
-      maxRadius: 2.2,
-      speed: 0.55,
-      repeatPeriod: 1800
-    }
-  ];
-
+function setPing(lat, lng) {
   globe.pointsData([
-    { lat, lng, color: 'rgba(255, 214, 138, 0.16)', radius: 0.9, altitude: 0.028 },
-    { lat, lng, color, radius: 0.4, altitude: 0.042 }
+    { lat, lng, color: 'rgba(255,110,199,0.26)', radius: 0.9, altitude: 0.028 },
+    { lat, lng, color: 'rgba(115,220,255,0.95)', radius: 0.35, altitude: 0.05 }
   ]);
-  globe.ringsData(isMobile ? ringPayload.slice(0, 1) : ringPayload);
+
+  globe.ringsData([
+    { lat, lng, color: 'rgba(255,110,199,0.52)', max: 2.8, speed: 0.9, period: 1400 },
+    { lat, lng, color: 'rgba(115,220,255,0.42)', max: 3.6, speed: 0.7, period: 1700 }
+  ]);
 }
 
-function resizeGlobe() {
-  globe.width(globeMount.clientWidth || window.innerWidth);
-  globe.height(globeMount.clientHeight || window.innerHeight);
+function openFeed(title) {
+  els.feedTitle.textContent = title;
+  els.feedSheet.classList.remove('hidden');
+  els.feedSheet.setAttribute('aria-hidden', 'false');
 }
 
-function focusGlobe(lat, lng, altitude = 1.35) {
-  globe.pointOfView({ lat, lng, altitude }, 420);
+function closeFeed() {
+  els.feedSheet.classList.add('hidden');
+  els.feedSheet.setAttribute('aria-hidden', 'true');
 }
 
-function getCurrentCenter() {
-  const pov = globe.pointOfView() || {};
-  return {
-    lat: Number(pov.lat) || 0,
-    lng: Number(pov.lng) || 0
-  };
+function setLoading(flag) {
+  state.loading = flag;
+  els.feedLoading.classList.toggle('hidden', !flag);
 }
 
-function getReticleTarget() {
-  return getCurrentCenter();
+function formatDate(v) {
+  if (!v) return 'just now';
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? 'just now' : d.toLocaleString();
 }
 
-function updateCenterUI() {
-  const c = getCurrentCenter();
-  const altitude = Number(globe.pointOfView()?.altitude) || 2;
-  state.globeCenter = { lat: c.lat, lng: c.lng };
-
-  if (!isInteracting && state.labelsVisible && Date.now() - state.lastLabelRefresh > 3200) {
-    state.lastLabelRefresh = Date.now();
-    refreshLabels(c);
-  }
-
-  if (state.mode === 'globe') {
-    const nearest = findNearestCountry(c.lat, c.lng);
-    regionChip.textContent = nearest ? `Region: ${nearest.label}` : 'Region: Open ocean';
-    const zoomBand = altitude <= 1.33 ? 'Local zoom' : altitude <= 1.65 ? 'Country zoom' : 'World zoom';
-    setDetailChip(`${zoomBand} · ${c.lat.toFixed(2)}, ${c.lng.toFixed(2)}`);
-  }
-}
-
-function setLocationBadge(text) {
-  locationBadge.textContent = text || 'World View';
-}
-
-function setDetailChip(text) {
-  if (!detailChip) return;
-  detailChip.textContent = text || 'Tap globe to ping a location';
-}
-
-function buildShareUrl() {
-  const loc = state.selectedLocation;
-  if (!loc?.latlng) return window.location.origin;
-
-  const params = new URLSearchParams();
-  if (loc.code && loc.code.length === 2) params.set('loc', loc.code);
-  params.set('lat', String(Number(loc.latlng.lat).toFixed(4)));
-  params.set('lng', String(Number(loc.latlng.lng).toFixed(4)));
-
-  return `${window.location.origin}/?${params.toString()}`;
-}
-
-function updateSharePingVisibility() {
-  const show = state.feedScope === 'local' && state.selectedLocation?.type !== 'world';
-  sharePingBtn?.classList.toggle('hidden', !show);
-}
-
-function renderFeed(stories = []) {
-  feedList.innerHTML = '';
-
-  if (!stories.length) {
-    feedList.innerHTML = '<li class="feed-item"><a href="#">No live headlines yet.</a><small>Try refresh in a moment.</small></li>';
+function renderFeed(items) {
+  els.feedList.innerHTML = '';
+  if (!items?.length) {
+    els.feedList.innerHTML = '<li>No headlines yet.</li>';
     return;
   }
 
-  for (const [idx, story] of stories.entries()) {
+  for (const item of items) {
     const li = document.createElement('li');
-    li.className = 'feed-item';
-    li.innerHTML = `
-      <a href="${story.link}" target="_blank" rel="noopener noreferrer">${story.title}</a>
-      <small>${story.source || 'Source'} · ${toDate(story.published)}</small>
-    `;
-    feedList.appendChild(li);
-
-    if ((idx + 1) % 7 === 0) {
-      // Native ad slot placeholder for future monetization injection.
-      const ad = document.createElement('li');
-      ad.className = 'ad-slot';
-      ad.textContent = 'Sponsored slot reserved';
-      feedList.appendChild(ad);
-    }
+    li.innerHTML = `<a href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a><small>${item.source || 'source'} • ${formatDate(item.published)}</small>`;
+    els.feedList.appendChild(li);
   }
 }
 
-function openFeedSheet(title = 'Click News · World') {
-  feedTitle.textContent = title;
-  feedSheet.classList.remove('hidden');
-  feedSheet.setAttribute('aria-hidden', 'false');
-  feedSheet.style.opacity = '0';
-  feedSheet.style.transform = 'translateY(24px)';
-  requestAnimationFrame(() => {
-    feedSheet.style.opacity = '1';
-    feedSheet.style.transform = 'translateY(0)';
-  });
-  state.mode = 'feed';
-}
-
-function closeFeedSheet() {
-  feedSheet.style.opacity = '0';
-  feedSheet.style.transform = 'translateY(24px)';
-  setTimeout(() => {
-    feedSheet.style.transform = '';
-    feedSheet.style.opacity = '';
-    feedSheet.classList.add('hidden');
-    feedSheet.setAttribute('aria-hidden', 'true');
-  }, 140);
-  state.mode = 'globe';
-}
-
-function savePing(name, lat, lng) {
-  if (!name || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
-
-  const key = `${lat.toFixed(2)},${lng.toFixed(2)}`;
-  const item = { name, lat, lng, ts: Date.now(), key };
-
-  state.savedPings = [item, ...state.savedPings.filter((p) => p.key !== key)].slice(0, 12);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.savedPings));
-  renderSavedPings();
-}
-
-function loadSavedPings() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    const maxAgeMs = 1000 * 60 * 60 * 24 * 45;
-    const now = Date.now();
-    const cleaned = (Array.isArray(raw) ? raw : [])
-      .filter((p) => Number.isFinite(Number(p?.lat)) && Number.isFinite(Number(p?.lng)))
-      .map((p) => ({
-        name: String(p.name || 'Pinned location'),
-        lat: Number(p.lat),
-        lng: Number(p.lng),
-        ts: Number(p.ts) || Date.now(),
-        key: p.key || `${Number(p.lat).toFixed(2)},${Number(p.lng).toFixed(2)}`
-      }))
-      .filter((p) => now - p.ts < maxAgeMs)
-      .slice(0, 12);
-
-    state.savedPings = cleaned;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
-  } catch {
-    state.savedPings = [];
-  }
-}
-
-function saveFeedCache(stories = []) {
-  try {
-    localStorage.setItem(
-      FEED_CACHE_KEY,
-      JSON.stringify({
-        ts: Date.now(),
-        stories: Array.isArray(stories) ? stories.slice(0, 40) : []
-      })
-    );
-  } catch {
-    // Ignore storage quota issues.
-  }
-}
-
-function loadFeedCache() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(FEED_CACHE_KEY) || 'null');
-    const stories = Array.isArray(raw?.stories) ? raw.stories : [];
-    if (stories.length) {
-      state.feed = stories;
-      state.lastFetchTimestamp = Number(raw?.ts) || 0;
-    }
-  } catch {
-    // Ignore invalid cache.
-  }
-}
-
-function loadSelectedLocation() {
-  const params = new URLSearchParams(window.location.search);
-  const latParam = params.get('lat');
-  const lngParam = params.get('lng');
-  const qLat = latParam == null ? Number.NaN : Number(latParam);
-  const qLng = lngParam == null ? Number.NaN : Number(lngParam);
-  const qLoc = (params.get('loc') || '').toUpperCase();
-
-  if (Number.isFinite(qLat) && Number.isFinite(qLng)) {
-    state.selectedLocation = {
-      type: qLoc ? 'country' : 'region',
-      code: qLoc || '',
-      name: qLoc || 'Shared Ping',
-      latlng: { lat: qLat, lng: qLng }
-    };
-    return;
-  }
-
-  // Deterministic app start: always launch in World View unless explicitly deep-linked.
-  state.selectedLocation = {
-    type: 'world',
-    code: '',
-    name: 'World View',
-    latlng: { lat: 20, lng: 0 }
-  };
-}
-
-function renderSavedPings() {
-  if (!state.savedPings.length) {
-    savedList.innerHTML = '<div class="result-btn">No saved pings yet.</div>';
-    return;
-  }
-
-  savedList.innerHTML = state.savedPings
-    .map(
-      (p, i) => `<button class="saved-btn" data-saved-index="${i}" type="button">${p.name}</button>`
-    )
-    .join('');
-
-  savedList.querySelectorAll('[data-saved-index]').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const idx = Number(btn.dataset.savedIndex);
-      const ping = state.savedPings[idx];
-      if (!ping) return;
-      closeSearchModal();
-      await pingAt(ping.lat, ping.lng, ping.name, ping.name);
-    });
-  });
-}
-
-function cancelActiveFetch() {
-  if (activeFetchController) {
-    activeFetchController.abort();
-    activeFetchController = null;
-  }
-}
-
-async function fetchJSON(url, timeoutMs = 9000, options = {}) {
-  const { exclusive = false } = options;
-  if (exclusive) {
-    cancelActiveFetch();
-  }
-
+async function fetchJSON(url, timeout = 10000) {
   const controller = new AbortController();
-  if (exclusive) {
-    activeFetchController = controller;
-  }
-
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const t = setTimeout(() => controller.abort(), timeout);
   try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      cache: 'no-store'
-    });
-
+    const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Request failed');
     return data;
   } finally {
-    clearTimeout(timer);
-    if (exclusive && activeFetchController === controller) {
-      activeFetchController = null;
-    }
+    clearTimeout(t);
   }
 }
 
-async function loadSignalFeed() {
-  const req = ++activeRequest;
+async function loadGlobalFeed() {
+  const req = ++state.activeReq;
+  openFeed('World Headlines');
   setLoading(true);
-  hideStatus();
-  lastFeedLoader = loadSignalFeed;
-  state.feedScope = 'global';
-  setDetailChip('Global view · rotate, zoom, and tap to ping');
-  updateSharePingVisibility();
-  openFeedSheet('Click News · World');
-  renderFeed(state.feed);
+  state.lastLoader = loadGlobalFeed;
 
   try {
-    const data = await fetchJSON('/api/signal', 9000, { exclusive: true });
-    if (req !== activeRequest) return;
-
+    const data = await fetchJSON('/api/signal', 10000);
+    if (req !== state.activeReq) return;
     state.feed = data.stories || [];
-    if ((state.feed || []).length < 6) {
-      try {
-        const ultra = await fetchJSON('/api/ultra-signal', 9000, { exclusive: true });
-        const merged = (ultra?.sections || []).flatMap((s) => s?.stories || []);
-        if (merged.length) {
-          const seen = new Set();
-          state.feed = merged.filter((story) => {
-            const key = `${String(story?.title || '').toLowerCase()}|${String(story?.link || '').toLowerCase()}`;
-            if (!story?.title || !story?.link || seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          }).slice(0, 30);
-        }
-      } catch {
-        // Keep base signal if ultra feed fails.
-      }
-    }
-
-    state.lastFetchTimestamp = Date.now();
-    saveFeedCache(state.feed);
-    renderFeed(state.feed);
-    openFeedSheet('Click News · World');
   } catch {
-    if (req === activeRequest) {
-      try {
-        const backup = await fetchJSON('/api/news?country=US&name=World', 9000, { exclusive: true });
-        if (req !== activeRequest) return;
-        state.feed = backup.stories || state.feed;
-        saveFeedCache(state.feed);
-        renderFeed(state.feed);
-        openFeedSheet('Click News · World');
-      } catch {
-        renderFeed(state.feed);
-        showStatus('Feeds temporarily unavailable — showing last known headlines.');
-        openFeedSheet('Click News · World');
-      }
-    }
-  } finally {
-    if (req === activeRequest) setLoading(false);
-  }
-}
-
-async function loadCountryFeed(code, name, center) {
-  const req = ++activeRequest;
-  setLoading(true);
-  hideStatus();
-  openFeedSheet(`Click News · ${name}`);
-  renderFeed(state.feed);
-
-  state.selectedLocation = {
-    type: 'country',
-    code,
-    name,
-    latlng: center
-  };
-  setLocationBadge(name);
-  updateSelectedCountry(code);
-  setPingVisual(center.lat, center.lng, '#f59e0b', center);
-  focusGlobe(center.lat, center.lng, 1.35);
-  regionChip.textContent = `Region: ${name}`;
-  setDetailChip(`Country focus · ${center.lat.toFixed(2)}, ${center.lng.toFixed(2)}`);
-  savePing(name, center.lat, center.lng);
-  state.feedScope = 'local';
-  updateSharePingVisibility();
-
-  lastFeedLoader = () => loadCountryFeed(code, name, center);
-
-  try {
-    const data = await fetchJSON(`/api/news?country=${encodeURIComponent(code)}&name=${encodeURIComponent(name)}`, 9000, {
-      exclusive: true
-    });
-    if (req !== activeRequest) return;
-    state.feed = data.stories || [];
-    saveFeedCache(state.feed);
-    renderFeed(state.feed);
-    openFeedSheet(`Click News · ${name}`);
-  } catch {
-    if (req === activeRequest) {
-      renderFeed(state.feed);
-      showStatus('Feeds temporarily unavailable — showing last known headlines.');
-      openFeedSheet(`Click News · ${name}`);
-    }
-  } finally {
-    if (req === activeRequest) setLoading(false);
-  }
-}
-
-async function pingAt(lat, lng, labelHint = '', queryHint = '') {
-  const req = ++activeRequest;
-  setLoading(true);
-  hideStatus();
-
-  const nearest = findNearestCountry(lat, lng);
-
-  setPingVisual(lat, lng, '#f59e0b', nearest ? { lat: nearest.lat, lng: nearest.lng } : null);
-  focusGlobe(lat, lng, 1.34);
-  if (nearest?.iso) {
-    updateSelectedCountry(nearest.iso);
-    regionChip.textContent = `Region: ${nearest.label}`;
-  }
-
-  state.feedScope = 'local';
-  updateSharePingVisibility();
-  openFeedSheet(`Click News · ${labelHint || nearest?.label || 'Nearby'}`);
-  renderFeed(state.feed);
-
-  lastFeedLoader = () => pingAt(lat, lng, labelHint, queryHint);
-
-  try {
-    const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
-    if (labelHint) params.set('label', labelHint);
-    if (queryHint) params.set('q', queryHint);
-
-    const data = await fetchJSON(`/api/nearby-news?${params.toString()}`, 9000, { exclusive: true });
-    if (req !== activeRequest) return;
-
-    const finalName = labelHint || data.location || nearest?.label || `${lat.toFixed(2)}, ${lng.toFixed(2)}`;
-    const geoParts = [data?.geo?.city, data?.geo?.state, data?.geo?.country].filter(Boolean);
-    const tierLabelMap = {
-      local: 'Local',
-      admin1: 'State/Region',
-      country: 'Country',
-      'country-backup': 'Country backup',
-      'global-fallback': 'Global fallback'
-    };
-    const tierLabel = tierLabelMap[data?.tierUsed] || 'Nearby';
-
-    state.selectedLocation = {
-      type: 'region',
-      code: data.code || nearest?.iso || state.selectedLocation.code,
-      name: finalName,
-      latlng: { lat, lng }
-    };
-    setLocationBadge(finalName);
-    const detail = geoParts.length ? geoParts.join(' · ') : `Pinned @ ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
-    setDetailChip(`${tierLabel} · ${detail}`);
-    savePing(finalName, lat, lng);
-
-    state.feed = data.stories || [];
-    if ((state.feed || []).length < 4 && data?.code) {
-      try {
-        const fallback = await fetchJSON(
-          `/api/news?country=${encodeURIComponent(data.code)}&name=${encodeURIComponent(data?.geo?.country || finalName)}`,
-          9000,
-          { exclusive: true }
-        );
-        if ((fallback?.stories || []).length > (state.feed || []).length) {
-          state.feed = fallback.stories;
-        }
-      } catch {
-        // Keep nearby results when country fallback fails.
-      }
-    }
-
-    saveFeedCache(state.feed);
-    renderFeed(state.feed);
-    openFeedSheet(`Click News · ${finalName}`);
-  } catch {
-    if (req === activeRequest) {
-      renderFeed(state.feed);
-      showStatus('Feeds temporarily unavailable — showing last known headlines.');
-      openFeedSheet('Click News · Nearby');
-    }
-  } finally {
-    if (req === activeRequest) setLoading(false);
-  }
-}
-
-async function selectCountry(iso, name, lat, lng) {
-  await loadCountryFeed(iso, name, { lat, lng });
-}
-
-async function runSearch() {
-  const query = (searchInput.value || '').trim();
-  if (query.length < 2) {
-    searchResults.innerHTML = '<div class="result-btn">Type at least 2 characters.</div>';
-    return;
-  }
-
-  searchResults.innerHTML = '<div class="result-btn">Searching…</div>';
-
-  try {
-    const data = await fetchJSON(`/api/lookup?q=${encodeURIComponent(query)}`);
-    const places = data.places || [];
-
-    if (!places.length) {
-      searchResults.innerHTML = '<div class="result-btn">No matching places.</div>';
-      return;
-    }
-
-    searchResults.innerHTML = places
-      .map(
-        (p, i) => `<button class="result-btn" data-place-index="${i}" type="button">${p.label}</button>`
-      )
-      .join('');
-
-    searchResults.querySelectorAll('[data-place-index]').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const idx = Number(btn.dataset.placeIndex);
-        const place = places[idx];
-        if (!place) return;
-
-        closeSearchModal();
-        await pingAt(
-          Number(place.lat),
-          Number(place.lng),
-          place.label,
-          [place.city, place.state, place.country].filter(Boolean).join(' ')
-        );
-      });
-    });
-  } catch {
-    searchResults.innerHTML = '<div class="result-btn">Search unavailable right now.</div>';
-  }
-}
-
-function openSearchModal() {
-  searchModal.classList.remove('hidden');
-  searchModal.setAttribute('aria-hidden', 'false');
-  searchInput.focus();
-}
-
-function closeSearchModal() {
-  searchModal.classList.add('hidden');
-  searchModal.setAttribute('aria-hidden', 'true');
-}
-
-function bindEvents() {
-  let pullStartY = null;
-  let pullDelta = 0;
-  let closeStartY = null;
-  let closeDelta = 0;
-
-  window.addEventListener('resize', () => {
-    resizeGlobe();
-    enforceGlobeVisualTheme();
-    refreshLabels(getCurrentCenter());
-  });
-
-  window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
-      resizeGlobe();
-      enforceGlobeVisualTheme();
-      refreshLabels(getCurrentCenter());
-    }, 120);
-  });
-
-  pingCenterBtn.addEventListener('click', async () => {
-    const target = getReticleTarget();
-    await pingAt(target.lat, target.lng, '', '');
-  });
-
-  labelsToggleBtn.addEventListener('click', () => {
-    state.labelsVisible = !state.labelsVisible;
-    labelsToggleBtn.textContent = state.labelsVisible ? '🗺 Labels On' : '🗺 Labels Off';
-    labelsToggleBtn.classList.toggle('active', state.labelsVisible);
-    if (state.labelsVisible) {
-      refreshLabels(state.globeCenter);
-    } else {
-      applyLabels();
-    }
-  });
-
-  openSignalBtn.addEventListener('click', async () => {
-    const pov = globe.pointOfView() || {};
-    const altitude = Number(pov.altitude) || 2;
-    const center = getCurrentCenter();
-    const nearest = findNearestCountry(center.lat, center.lng);
-
-    if (state.selectedLocation?.type !== 'world' && state.feedScope === 'local') {
-      if ((state.feed || []).length < 3 && state.selectedLocation?.latlng) {
-        await pingAt(
-          Number(state.selectedLocation.latlng.lat),
-          Number(state.selectedLocation.latlng.lng),
-          state.selectedLocation.name || '',
-          state.selectedLocation.name || ''
-        );
-        return;
-      }
-      openFeedSheet(`Click News · ${state.selectedLocation.name}`);
-      renderFeed(state.feed);
-      return;
-    }
-
-    if (altitude <= 1.5 && nearest?.iso && nearest?.label) {
-      await loadCountryFeed(nearest.iso, nearest.label, { lat: nearest.lat, lng: nearest.lng });
-      return;
-    }
-
-    await loadSignalFeed();
-  });
-  closeFeedBtn.addEventListener('click', closeFeedSheet);
-
-  sharePingBtn?.addEventListener('click', async () => {
-    const url = buildShareUrl();
-    const title = state.selectedLocation?.name || 'World View';
-    const text = `Check this location on Click World News: ${title}`;
-
+    if (req !== state.activeReq) return;
     try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Click World News', text, url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        showStatus('Share link copied to clipboard.');
-        setTimeout(() => hideStatus(), 2200);
-      }
+      const backup = await fetchJSON('/api/news?country=US&name=World', 10000);
+      state.feed = backup.stories || [];
     } catch {
-      // User cancelled share sheet.
+      // keep previous stories
     }
-  });
-
-  refreshFeedBtn.addEventListener('click', () => {
-    if (typeof lastFeedLoader === 'function') {
-      lastFeedLoader();
-      return;
+  } finally {
+    if (req === state.activeReq) {
+      renderFeed(state.feed);
+      setLoading(false);
+      updateHud('Global feed opened');
     }
-    loadSignalFeed();
-  });
-
-  openSearchBtn.addEventListener('click', openSearchModal);
-  closeSearchBtn.addEventListener('click', closeSearchModal);
-
-  searchSubmitBtn.addEventListener('click', runSearch);
-  searchInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') runSearch();
-  });
-
-  clearSavedBtn.addEventListener('click', () => {
-    state.savedPings = [];
-    localStorage.setItem(STORAGE_KEY, '[]');
-    renderSavedPings();
-  });
-
-  searchModal.addEventListener('click', (event) => {
-    if (event.target === searchModal) closeSearchModal();
-  });
-
-  feedSheet.addEventListener(
-    'touchstart',
-    (event) => {
-      if (feedSheet.classList.contains('hidden')) return;
-      if (feedSheet.scrollTop <= 0) {
-        pullStartY = event.touches[0].clientY;
-        pullDelta = 0;
-      }
-    },
-    { passive: true }
-  );
-
-  feedSheet.addEventListener(
-    'touchmove',
-    (event) => {
-      if (feedSheet.classList.contains('hidden') || pullStartY == null) return;
-      pullDelta = event.touches[0].clientY - pullStartY;
-      if (pullDelta > 12 && feedSheet.scrollTop <= 0) {
-        setLoading(true);
-      }
-    },
-    { passive: true }
-  );
-
-  feedSheet.addEventListener(
-    'touchend',
-    () => {
-      if (pullStartY == null) return;
-      if (pullDelta > 78) {
-        if (typeof lastFeedLoader === 'function') {
-          lastFeedLoader();
-        } else {
-          loadSignalFeed();
-        }
-      } else {
-        setLoading(false);
-      }
-      pullStartY = null;
-      pullDelta = 0;
-    },
-    { passive: true }
-  );
-
-  sheetHandle?.addEventListener(
-    'touchstart',
-    (event) => {
-      closeStartY = event.touches[0].clientY;
-      closeDelta = 0;
-    },
-    { passive: true }
-  );
-
-  sheetHandle?.addEventListener(
-    'touchmove',
-    (event) => {
-      if (closeStartY == null) return;
-      closeDelta = event.touches[0].clientY - closeStartY;
-      if (closeDelta > 0) {
-        feedSheet.style.transform = `translateY(${Math.min(closeDelta, 120)}px)`;
-      }
-    },
-    { passive: true }
-  );
-
-  sheetHandle?.addEventListener(
-    'touchend',
-    () => {
-      feedSheet.style.transform = '';
-      if (closeDelta > 70) closeFeedSheet();
-      closeStartY = null;
-      closeDelta = 0;
-    },
-    { passive: true }
-  );
+  }
 }
 
-async function initCountries() {
-  const res = await fetch('/data/countries.geojson');
-  const geojson = await res.json();
+async function loadNearbyFeed(lat, lng, label = '') {
+  const req = ++state.activeReq;
+  openFeed(`Signal: ${label || 'Nearby'}`);
+  setLoading(true);
+  state.lastLoader = () => loadNearbyFeed(lat, lng, label);
 
-  polygons = (geojson.features || []).map(normalizeFeature).filter(Boolean);
-  globe.polygonsData(polygons);
-  buildCountryCenters();
+  try {
+    const data = await fetchJSON(`/api/nearby-news?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`, 10000);
+    if (req !== state.activeReq) return;
+    state.feed = data.stories || [];
+  } catch {
+    if (req !== state.activeReq) return;
+  } finally {
+    if (req === state.activeReq) {
+      renderFeed(state.feed);
+      setLoading(false);
+    }
+  }
+}
+
+async function selectCountry({ iso, name, lat, lng }) {
+  state.selected = { type: 'country', code: iso, name, lat, lng };
+  globe.polygonsData(state.polygons);
+  globe.pointOfView({ lat, lng, altitude: 1.34 }, 700);
+  setPing(lat, lng);
+  els.region.textContent = `Region: ${name}`;
+  updateHud(`Country focus • ${lat.toFixed(2)}, ${lng.toFixed(2)}`);
+  refreshLabels();
+  await loadNearbyFeed(lat, lng, name);
+}
+
+async function pingAt(lat, lng) {
+  const near = nearestCountry(lat, lng);
+  const label = near?.name || 'Nearby';
+  state.selected = { type: 'region', code: near?.iso || '', name: label, lat, lng };
+  globe.polygonsData(state.polygons);
+  globe.pointOfView({ lat, lng, altitude: 1.32 }, 520);
+  setPing(lat, lng);
+  els.region.textContent = `Region: ${label}`;
+  updateHud(`Signal dropped • ${lat.toFixed(2)}, ${lng.toFixed(2)}`);
+  refreshLabels();
+  await loadNearbyFeed(lat, lng, label);
+}
+
+function worldReset() {
+  state.selected = { type: 'world', name: 'World', code: '', lat: 20, lng: 0 };
+  globe.polygonsData(state.polygons);
+  globe.pointOfView({ lat: 20, lng: 0, altitude: 1.85 }, 700);
+  globe.pointsData([]);
+  globe.ringsData([]);
+  els.region.textContent = 'Region: World';
+  updateHud('Tap globe to drop signal');
   refreshLabels();
 }
 
-async function init() {
-  loadFeedCache();
-  loadSelectedLocation();
-  loadSavedPings();
-  renderSavedPings();
-  renderFeed(state.feed);
-  setDetailChip('Global view · rotate, zoom, and tap to ping');
-  bindEvents();
-  resizeGlobe();
+function openSearch() {
+  els.searchModal.classList.remove('hidden');
+  els.searchModal.setAttribute('aria-hidden', 'false');
+  els.searchInput.focus();
+}
 
-  labelsToggleBtn.classList.add('active');
-  labelsToggleBtn.textContent = '🗺 Labels On';
+function closeSearch() {
+  els.searchModal.classList.add('hidden');
+  els.searchModal.setAttribute('aria-hidden', 'true');
+}
+
+async function runSearch() {
+  const q = String(els.searchInput.value || '').trim();
+  if (q.length < 2) {
+    els.searchResults.innerHTML = '<div class="result-item">Type at least 2 characters.</div>';
+    return;
+  }
+
+  els.searchResults.innerHTML = '<div class="result-item">Searching...</div>';
 
   try {
-    await initCountries();
-    if (USE_ADMIN_BOUNDARIES) initAdmin1Boundaries();
-    hideStatus();
-    pingCenterBtn.classList.remove('hidden');
-  } catch {
-    showStatus('Could not load world boundaries right now. Refresh once.');
-  }
-
-  clearInterval(centerTimer);
-  centerTimer = setInterval(updateCenterUI, 1800);
-  updateCenterUI();
-
-  if (state.selectedLocation?.type !== 'world') {
-    setLocationBadge(state.selectedLocation.name);
-    focusGlobe(state.selectedLocation.latlng.lat, state.selectedLocation.latlng.lng, 1.4);
-    setPingVisual(state.selectedLocation.latlng.lat, state.selectedLocation.latlng.lng);
-    updateSelectedCountry(state.selectedLocation.code);
-    state.feedScope = 'local';
-  }
-
-  updateSharePingVisibility();
-  lastFeedLoader = loadSignalFeed;
-
-  // Warm global feed so first Click News open is instant.
-  if (!state.feed.length) {
-    fetchJSON('/api/signal', 7000)
-      .then((data) => {
-        state.feed = data.stories || [];
-        saveFeedCache(state.feed);
-      })
-      .catch(() => {});
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const latParam = params.get('lat');
-  const lngParam = params.get('lng');
-  const qLat = latParam == null ? Number.NaN : Number(latParam);
-  const qLng = lngParam == null ? Number.NaN : Number(lngParam);
-  if (Number.isFinite(qLat) && Number.isFinite(qLng)) {
-    await pingAt(qLat, qLng, state.selectedLocation?.name || '', '');
-  }
-
-  if (DEMO_MODE === 'feed') {
-    await loadSignalFeed();
-  }
-
-  if (DEMO_MODE === 'country') {
-    const usFeature = findFeatureByIso('US');
-    const center = getFeatureCenter(usFeature);
-    if (center) {
-      await loadCountryFeed('US', 'United States', center);
+    const data = await fetchJSON(`/api/lookup?q=${encodeURIComponent(q)}`, 10000);
+    const places = data.places || [];
+    if (!places.length) {
+      els.searchResults.innerHTML = '<div class="result-item">No matches.</div>';
+      return;
     }
-  }
 
-  if (DEMO_MODE === 'search') {
-    openSearchModal();
+    els.searchResults.innerHTML = places
+      .map((p, i) => `<button class="result-item" data-i="${i}" type="button">${p.label}</button>`)
+      .join('');
+
+    els.searchResults.querySelectorAll('[data-i]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const p = places[Number(btn.dataset.i)];
+        closeSearch();
+        if (!p) return;
+        await pingAt(Number(p.lat), Number(p.lng));
+      });
+    });
+  } catch {
+    els.searchResults.innerHTML = '<div class="result-item">Search unavailable right now.</div>';
   }
+}
+
+function bind() {
+  window.addEventListener('resize', () => {
+    resize();
+    styleScene();
+    refreshLabels();
+  });
+
+  els.ping.addEventListener('click', async () => {
+    const pov = globe.pointOfView();
+    await pingAt(Number(pov.lat || 0), Number(pov.lng || 0));
+  });
+
+  els.labels.addEventListener('click', () => {
+    state.labelsOn = !state.labelsOn;
+    els.labels.textContent = state.labelsOn ? 'Labels On' : 'Labels Off';
+    refreshLabels();
+  });
+
+  els.openNews.addEventListener('click', async () => {
+    if (state.selected.type === 'world') {
+      await loadGlobalFeed();
+    } else {
+      await loadNearbyFeed(state.selected.lat, state.selected.lng, state.selected.name);
+    }
+  });
+
+  els.world.addEventListener('click', worldReset);
+  els.closeFeed.addEventListener('click', closeFeed);
+  els.refreshFeed.addEventListener('click', () => (state.lastLoader ? state.lastLoader() : loadGlobalFeed()));
+
+  els.openSearch.addEventListener('click', openSearch);
+  els.closeSearch.addEventListener('click', closeSearch);
+  els.searchGo.addEventListener('click', runSearch);
+  els.searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') runSearch();
+  });
+  els.searchModal.addEventListener('click', (e) => {
+    if (e.target === els.searchModal) closeSearch();
+  });
+
+  setInterval(() => {
+    updateHud();
+    refreshLabels();
+  }, 2400);
+}
+
+async function loadCountries() {
+  const res = await fetch('/data/countries.geojson', { cache: 'force-cache' });
+  const json = await res.json();
+  const features = Array.isArray(json?.features) ? json.features : [];
+
+  state.polygons = features
+    .map((f) => {
+      const p = f?.properties || {};
+      const iso = String(p.ISO_A2 || '').toUpperCase().trim();
+      if (!/^[A-Z]{2}$/.test(iso)) return null;
+      const name = String(p.ADMIN || p.NAME || iso).trim();
+      return { ...f, properties: { ...p, ISO_A2: iso, ADMIN: name, NAME: name } };
+    })
+    .filter(Boolean);
+
+  globe.polygonsData(state.polygons);
+
+  state.centers = state.polygons
+    .map((f) => {
+      const c = centerOfFeature(f);
+      if (!c) return null;
+      return {
+        iso: f.properties.ISO_A2,
+        name: f.properties.ADMIN,
+        label: f.properties.ADMIN,
+        lat: c.lat,
+        lng: c.lng
+      };
+    })
+    .filter(Boolean);
+
+  state.byIso = new Map(state.centers.map((c) => [c.iso, { lat: c.lat, lng: c.lng }]));
+}
+
+async function init() {
+  resize();
+  styleScene();
+  bind();
+  await loadCountries();
+  updateHud('Tap globe to drop signal');
+  refreshLabels();
+  loadGlobalFeed();
 }
 
 init();
