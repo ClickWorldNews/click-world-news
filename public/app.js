@@ -91,14 +91,22 @@ const globe = Globe({
   .showAtmosphere(false)
   .atmosphereColor('#0d121a')
   .atmosphereAltitude(0)
-  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.01))
+  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
       ? 'rgba(164, 181, 196, 0.28)'
-      : 'rgba(102, 115, 130, 0.07)'
+      : 'rgba(0, 0, 0, 0)'
   )
-  .polygonSideColor(() => 'rgba(66, 76, 90, 0.07)')
-  .polygonStrokeColor(() => 'rgba(128, 145, 168, 0.16)')
+  .polygonSideColor((f) =>
+    f?.properties?.ISO_A2 === state.selectedLocation.code
+      ? 'rgba(94, 109, 126, 0.14)'
+      : 'rgba(0, 0, 0, 0)'
+  )
+  .polygonStrokeColor((f) =>
+    f?.properties?.ISO_A2 === state.selectedLocation.code
+      ? 'rgba(171, 191, 214, 0.44)'
+      : 'rgba(0, 0, 0, 0)'
+  )
   .polygonsTransitionDuration(0)
   .labelsData([])
   .labelLat((d) => d.lat)
