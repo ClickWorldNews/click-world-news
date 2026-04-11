@@ -65,6 +65,7 @@ const ART = {
 
 const GLOBE_TEXTURE_URL = '/vendor/earth-night.jpg';
 const GLOBE_BUMP_URL = '/vendor/earth-topology.png';
+const USE_ADMIN_BOUNDARIES = false;
 
 const MAJOR_CITY_LABELS = [
   { label: 'New York', lat: 40.7128, lng: -74.0060, color: 'rgba(255, 221, 166, 0.96)' },
@@ -148,18 +149,18 @@ const globe = Globe({
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.056 : 0.004))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(226, 192, 138, 0.24)'
-      : 'rgba(74, 88, 112, 0.16)'
+      ? 'rgba(226, 192, 138, 0.34)'
+      : 'rgba(58, 72, 96, 0.72)'
   )
   .polygonSideColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(154, 122, 74, 0.18)'
-      : 'rgba(34, 45, 62, 0.08)'
+      ? 'rgba(154, 122, 74, 0.3)'
+      : 'rgba(22, 30, 44, 0.38)'
   )
   .polygonStrokeColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(226, 192, 138, 0.92)'
-      : 'rgba(201, 164, 106, 0.44)'
+      ? 'rgba(242, 216, 174, 0.98)'
+      : 'rgba(201, 164, 106, 0.62)'
   )
   .polygonsTransitionDuration(0)
   .labelsData([])
@@ -266,17 +267,17 @@ function enforceGlobeVisualTheme() {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
       color: ART.rimHalo,
-      opacity: 0.16,
+      opacity: 0.2,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.072);
+    globe.atmosphereAltitude(0.078);
   }
 
   if (typeof globe.renderer === 'function') {
     const renderer = globe.renderer();
     if (renderer) {
       renderer.toneMapping = window.THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = isMobile ? 1.14 : 1.2;
+      renderer.toneMappingExposure = isMobile ? 1.06 : 1.12;
       renderer.outputColorSpace = window.THREE.SRGBColorSpace;
 
       const mat = globe.globeMaterial?.();
@@ -1381,7 +1382,7 @@ async function init() {
 
   try {
     await initCountries();
-    initAdmin1Boundaries();
+    if (USE_ADMIN_BOUNDARIES) initAdmin1Boundaries();
     hideStatus();
     pingCenterBtn.classList.remove('hidden');
   } catch {
