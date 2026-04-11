@@ -43,26 +43,26 @@ const globe = Globe({
   rendererConfig: { antialias: true, alpha: true, powerPreference: 'high-performance' }
 })(els.mount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('/vendor/earth-night-premium.jpg?v=20260411aa')
-  .bumpImageUrl('/vendor/earth-topology.png?v=20260411aa')
+  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg?v=20260411ab')
+  .bumpImageUrl('/vendor/earth-topology.png?v=20260411ab')
   .showAtmosphere(true)
-  .atmosphereColor('#7f93b3')
-  .atmosphereAltitude(0.053)
-  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selected.code ? 0.042 : 0.0016))
+  .atmosphereColor('#89a8d3')
+  .atmosphereAltitude(0.048)
+  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selected.code ? 0.040 : 0.0014))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selected.code
-      ? 'rgba(201, 164, 106, 0.16)'
-      : 'rgba(10, 15, 22, 0.06)'
+      ? 'rgba(226, 196, 140, 0.15)'
+      : 'rgba(12, 19, 30, 0.05)'
   )
   .polygonSideColor((f) =>
     f?.properties?.ISO_A2 === state.selected.code
-      ? 'rgba(138, 108, 64, 0.20)'
-      : 'rgba(8, 12, 18, 0.04)'
+      ? 'rgba(154, 122, 78, 0.18)'
+      : 'rgba(9, 14, 22, 0.04)'
   )
   .polygonStrokeColor((f) =>
     f?.properties?.ISO_A2 === state.selected.code
-      ? 'rgba(233, 202, 151, 0.90)'
-      : 'rgba(170, 184, 208, 0.12)'
+      ? 'rgba(240, 214, 168, 0.92)'
+      : 'rgba(178, 197, 224, 0.14)'
   )
   .labelsData([])
   .labelLat((d) => d.lat)
@@ -119,19 +119,19 @@ function styleScene() {
   const renderer = globe.renderer?.();
   if (renderer) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.06;
+    renderer.toneMappingExposure = 1.14;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     const dpr = window.devicePixelRatio || 1;
-    renderer.setPixelRatio?.(Math.min(dpr, 1.8));
+    renderer.setPixelRatio?.(Math.min(dpr, 1.9));
   }
 
   const mat = globe.globeMaterial?.();
   if (mat) {
-    mat.color?.set?.('#f4f8ff');
-    mat.emissive?.set?.('#03070d');
-    mat.specular?.set?.('#d9c6a4');
-    mat.shininess = 20;
-    mat.bumpScale = 0.30;
+    mat.color?.set?.('#ffffff');
+    mat.emissive?.set?.('#020611');
+    mat.specular?.set?.('#ebd6b1');
+    mat.shininess = 24;
+    mat.bumpScale = 0.33;
     if (mat.map && renderer?.capabilities?.getMaxAnisotropy) {
       mat.map.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
       mat.map.needsUpdate = true;
@@ -142,26 +142,26 @@ function styleScene() {
   const scene = globe.scene();
   scene.traverse((obj) => {
     if (obj?.isAmbientLight) {
-      obj.color?.set?.('#9eb2cc');
-      obj.intensity = 0.12;
+      obj.color?.set?.('#adc3e2');
+      obj.intensity = 0.14;
     }
     if (obj?.isDirectionalLight) {
-      obj.color?.set?.('#dce9fa');
-      obj.intensity = 0.88;
-      obj.position?.set?.(2.8, 2.0, -2.45);
+      obj.color?.set?.('#e5f1ff');
+      obj.intensity = 0.96;
+      obj.position?.set?.(2.9, 2.1, -2.4);
     }
   });
 
   if (!scene.userData.warmRim) {
-    const warm = new THREE.DirectionalLight('#d2b483', 0.24);
-    warm.position.set(-2.9, 1.0, 2.4);
+    const warm = new THREE.DirectionalLight('#e3c793', 0.30);
+    warm.position.set(-3.0, 1.15, 2.45);
     scene.add(warm);
     scene.userData.warmRim = warm;
   }
 
   if (!scene.userData.coolRim) {
-    const cool = new THREE.DirectionalLight('#8aa7cf', 0.18);
-    cool.position.set(2.4, -0.3, 2.15);
+    const cool = new THREE.DirectionalLight('#98c0ea', 0.22);
+    cool.position.set(2.5, -0.25, 2.2);
     scene.add(cool);
     scene.userData.coolRim = cool;
   }
