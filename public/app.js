@@ -136,8 +136,8 @@ const globe = Globe({
   .globeImageUrl('/vendor/earth-art-a.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
   .showAtmosphere(true)
-  .atmosphereColor(ART.rimCore)
-  .atmosphereAltitude(0.075)
+  .atmosphereColor(ART.rimHalo)
+  .atmosphereAltitude(0.06)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
@@ -228,20 +228,20 @@ function enforceGlobeVisualTheme() {
 
   globe.globeImageUrl('/vendor/earth-art-a.jpg');
   globe.globeMaterial(new THREE.MeshPhongMaterial({
-    color: '#202736',
-    emissive: '#0c1224',
-    specular: '#c9d3e2',
-    shininess: 7
+    color: '#2b303a',
+    emissive: '#0b0f15',
+    specular: '#c9a46a',
+    shininess: 6
   }));
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: ART.rimCore,
-      opacity: 0.14,
+      color: ART.rimHalo,
+      opacity: 0.12,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.075);
+    globe.atmosphereAltitude(0.06);
   }
 
   if (typeof globe.scene === 'function') {
