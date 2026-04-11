@@ -31,6 +31,7 @@ const isMobile =
 const STORAGE_KEY = 'click-world-saved-pings-v1';
 const FEED_CACHE_KEY = 'click-world-last-feed-v1';
 const DEMO_MODE = new URLSearchParams(window.location.search).get('demo');
+const ADMIN1_GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_1_states_provinces_lines.geojson';
 const MAJOR_LABEL_ISO = new Set([
   'US', 'CA', 'MX', 'BR', 'AR', 'CL', 'CO', 'PE',
   'GB', 'FR', 'DE', 'ES', 'IT', 'PL', 'UA', 'SE', 'NO', 'TR',
@@ -111,6 +112,8 @@ const state = {
 let polygons = [];
 let countryCenters = [];
 let countryCenterByIso = new Map();
+let admin1Paths = [];
+let admin1Centers = [];
 let labelPoints = [];
 let activeRequest = 0;
 let centerTimer = null;
@@ -175,6 +178,22 @@ const globe = Globe({
   .pointRadius((d) => d.radius ?? 0.45)
   .pointColor((d) => d.color)
   .pointResolution(isMobile ? 8 : 16)
+  .pathsData([])
+  .pathPoints((d) => d.points)
+  .pathPointLat((p) => p.lat)
+  .pathPointLng((p) => p.lng)
+  .pathColor((d) => {
+    const altitude = Number(globe.pointOfView()?.altitude) || 2;
+    if (altitude > 1.62) return 'rgba(0,0,0,0)';
+    return d.color;
+  })
+  .pathAltitude(() => 0.004)
+  .pathStroke((d) => {
+    const altitude = Number(globe.pointOfView()?.altitude) || 2;
+    if (altitude > 1.62) return 0;
+    return d.stroke;
+  })
+  .pathResolution(2)
   .ringsData([])
   .ringLat((d) => d.lat)
   .ringLng((d) => d.lng)
@@ -351,6 +370,122 @@ function getFeatureCenter(feature) {
   return { lat, lng };
 }
 
+function simplifyLineCoords(coords = [], stride = 1) {
+  const out = [];
+  const step = Math.max(1, stride);
+  for (let i = 0; i < coords.length; i += step) {
+    const c = coords[i];
+    if (!Array.isArray(c) || c.length < 2) continue;
+    const lng = Number(c[0]);
+    const lat = Number(c[1]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    out.push({ lat, lng });
+  }
+  if (coords.length) {
+    const last = coords[coords.length - 1];
+    if (Array.isArray(last) && last.length >= 2) {
+      const lng = Number(last[0]);
+      const lat = Number(last[1]);
+      const prev = out[out.length - 1];
+      if (Number.isFinite(lat) && Number.isFinite(lng) && (!prev || prev.lat !== lat || prev.lng !== lng)) {
+        out.push({ lat, lng });
+      }
+    }
+  }
+  return out;
+}
+
+function meanCoord(points = []) {
+  if (!points.length) return null;
+  const lat = points.reduce((sum, p) => sum + p.lat, 0) / points.length;
+  const sinLng = points.reduce((sum, p) => sum + Math.sin((p.lng * Math.PI) / 180), 0);
+  const cosLng = points.reduce((sum, p) => sum + Math.cos((p.lng * Math.PI) / 180), 0);
+  const lng = (Math.atan2(sinLng / points.length, cosLng / points.length) * 180) / Math.PI;
+  return { lat, lng };
+}
+
+async function initAdmin1Boundaries() {
+  try {
+    const response = await fetch(ADMIN1_GEOJSON_URL, { cache: 'force-cache' });
+    if (!response.ok) return;
+
+    const geojson = await response.json();
+    const features = Array.isArray(geojson?.features) ? geojson.features : [];
+    const stride = isMobile ? 3 : 2;
+
+    const parsedPaths = [];
+    const parsedCenters = [];
+
+    for (const feature of features) {
+      const props = feature?.properties || {};
+      const label = String(
+        props.name_en || props.name || props.woe_name || props.gn_name || props.name_alt || ''
+      ).trim();
+      const geom = feature?.geometry || {};
+      const type = geom?.type;
+      const coords = geom?.coordinates;
+
+      if (!label || !coords) continue;
+
+      if (type === 'LineString') {
+        const points = simplifyLineCoords(coords, stride);
+        if (points.length < 2) continue;
+
+        parsedPaths.push({
+          points,
+          stroke: isMobile ? 0.32 : 0.42,
+          color: 'rgba(201, 164, 106, 0.24)'
+        });
+
+        const center = meanCoord(points);
+        if (center) {
+          parsedCenters.push({
+            iso: `ADM1:${label}:${parsedCenters.length}`,
+            label,
+            lat: center.lat,
+            lng: center.lng,
+            color: 'rgba(191, 197, 211, 0.9)'
+          });
+        }
+      }
+
+      if (type === 'MultiLineString') {
+        const lines = Array.isArray(coords) ? coords : [];
+        for (const line of lines) {
+          const points = simplifyLineCoords(line, stride);
+          if (points.length < 2) continue;
+
+          parsedPaths.push({
+            points,
+            stroke: isMobile ? 0.3 : 0.38,
+            color: 'rgba(154, 122, 74, 0.2)'
+          });
+        }
+
+        const firstLine = lines.find((line) => Array.isArray(line) && line.length >= 2) || [];
+        const firstPoints = simplifyLineCoords(firstLine, stride);
+        const center = meanCoord(firstPoints);
+        if (center) {
+          parsedCenters.push({
+            iso: `ADM1:${label}:${parsedCenters.length}`,
+            label,
+            lat: center.lat,
+            lng: center.lng,
+            color: 'rgba(191, 197, 211, 0.9)'
+          });
+        }
+      }
+    }
+
+    admin1Paths = parsedPaths.slice(0, isMobile ? 1400 : 2200);
+    admin1Centers = parsedCenters.slice(0, 1000);
+    globe.pathsData(admin1Paths);
+    refreshLabels(state.globeCenter);
+  } catch {
+    // Admin-1 boundaries are optional enhancement; keep app functional if source unavailable.
+  }
+}
+
 function buildCountryCenters() {
   countryCenterByIso = new Map();
   countryCenters = polygons
@@ -453,7 +588,17 @@ function buildLabelPoints(anchor = state.globeCenter) {
     .slice(0, isMobile ? 5 : 9)
     .map(({ dist, ...rest }) => rest);
 
-  const candidates = [...major, ...centerSlice, ...citySlice, ...stateSlice];
+  const admin1Slice = admin1Centers
+    .map((c) => ({
+      ...c,
+      dist: angularDistance(anchor.lat, anchor.lng, c.lat, c.lng),
+      priority: 2.15
+    }))
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, isMobile ? 8 : 14)
+    .map(({ dist, ...rest }) => rest);
+
+  const candidates = [...major, ...centerSlice, ...citySlice, ...stateSlice, ...admin1Slice];
 
   if (state.selectedLocation.code) {
     const selected = countryCenters.find((c) => c.iso === state.selectedLocation.code);
@@ -1186,6 +1331,7 @@ async function init() {
 
   try {
     await initCountries();
+    initAdmin1Boundaries();
     hideStatus();
     pingCenterBtn.classList.remove('hidden');
   } catch {
