@@ -88,16 +88,16 @@ const globe = Globe({
   .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
   .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
   .showAtmosphere(true)
-  .atmosphereColor('#7dafff')
-  .atmosphereAltitude(isMobile ? 0.045 : 0.085)
+  .atmosphereColor('#586a7d')
+  .atmosphereAltitude(isMobile ? 0.02 : 0.032)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.01))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(104, 184, 255, 0.64)'
-      : 'rgba(73, 151, 229, 0.15)'
+      ? 'rgba(128, 178, 228, 0.52)'
+      : 'rgba(150, 166, 184, 0.10)'
   )
-  .polygonSideColor(() => 'rgba(92, 154, 226, 0.12)')
-  .polygonStrokeColor(() => 'rgba(198, 220, 255, 0.27)')
+  .polygonSideColor(() => 'rgba(111, 124, 140, 0.08)')
+  .polygonStrokeColor(() => 'rgba(198, 212, 232, 0.22)')
   .polygonsTransitionDuration(0)
   .labelsData([])
   .labelLat((d) => d.lat)
@@ -115,17 +115,17 @@ const globe = Globe({
   .pointsData([])
   .pointLat((d) => d.lat)
   .pointLng((d) => d.lng)
-  .pointAltitude(() => 0.035)
-  .pointRadius(() => 0.45)
+  .pointAltitude((d) => d.altitude ?? 0.035)
+  .pointRadius((d) => d.radius ?? 0.45)
   .pointColor((d) => d.color)
   .pointResolution(isMobile ? 14 : 24)
   .ringsData([])
   .ringLat((d) => d.lat)
   .ringLng((d) => d.lng)
   .ringColor((d) => (t) => (t < 1 ? d.color : 'transparent'))
-  .ringMaxRadius(() => 5.4)
-  .ringPropagationSpeed(() => 1.15)
-  .ringRepeatPeriod(() => 980)
+  .ringMaxRadius(() => 3.2)
+  .ringPropagationSpeed(() => 0.9)
+  .ringRepeatPeriod(() => 1400)
   .onPolygonClick((feat) => {
     const iso = feat?.properties?.ISO_A2;
     const name = feat?.properties?.ADMIN || feat?.properties?.NAME || iso;
@@ -154,6 +154,17 @@ controls.maxDistance = 300;
 
 if (typeof globe.polygonCapCurvatureResolution === 'function') {
   globe.polygonCapCurvatureResolution(isMobile ? 3 : 5);
+}
+
+if (typeof globe.globeMaterial === 'function' && window.THREE) {
+  const material = globe.globeMaterial();
+  if (material) {
+    material.color = new THREE.Color('#8d9aab');
+    material.emissive = new THREE.Color('#050a12');
+    material.emissiveIntensity = isMobile ? 0.22 : 0.18;
+    material.shininess = isMobile ? 4 : 7;
+    material.specular = new THREE.Color('#2f4155');
+  }
 }
 
 controls.addEventListener('start', () => {
@@ -359,11 +370,14 @@ function updateSelectedCountry(iso) {
 }
 
 function setPingVisual(lat, lng, color = '#ffd166') {
-  globe.pointsData([{ lat, lng, color }]);
+  globe.pointsData([
+    { lat, lng, color: 'rgba(122, 182, 255, 0.20)', radius: 0.9, altitude: 0.028 },
+    { lat, lng, color, radius: 0.4, altitude: 0.042 }
+  ]);
   globe.ringsData(
     isMobile
       ? []
-      : [{ lat, lng, color: 'rgba(255, 209, 102, 0.86)' }]
+      : [{ lat, lng, color: 'rgba(141, 188, 255, 0.42)' }]
   );
 }
 
