@@ -43,26 +43,26 @@ const globe = Globe({
   rendererConfig: { antialias: true, alpha: true, powerPreference: 'high-performance' }
 })(els.mount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('/vendor/earth-art-a.jpg?v=20260411x')
-  .bumpImageUrl('/vendor/earth-topology.png?v=20260411x')
+  .globeImageUrl('/vendor/earth-balanced-v2.jpg?v=20260411y')
+  .bumpImageUrl('/vendor/earth-topology.png?v=20260411y')
   .showAtmosphere(true)
-  .atmosphereColor('#a083ff')
-  .atmosphereAltitude(0.078)
-  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selected.code ? 0.052 : 0.004))
+  .atmosphereColor('#b59dff')
+  .atmosphereAltitude(0.064)
+  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selected.code ? 0.045 : 0.0018))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selected.code
-      ? 'rgba(255, 110, 199, 0.26)'
-      : 'rgba(16, 16, 32, 0.10)'
+      ? 'rgba(255, 134, 213, 0.20)'
+      : 'rgba(15, 14, 30, 0.06)'
   )
   .polygonSideColor((f) =>
     f?.properties?.ISO_A2 === state.selected.code
-      ? 'rgba(155, 123, 255, 0.30)'
-      : 'rgba(10, 9, 22, 0.08)'
+      ? 'rgba(155, 123, 255, 0.24)'
+      : 'rgba(10, 9, 22, 0.04)'
   )
   .polygonStrokeColor((f) =>
     f?.properties?.ISO_A2 === state.selected.code
-      ? 'rgba(255, 203, 238, 0.98)'
-      : 'rgba(198, 175, 255, 0.22)'
+      ? 'rgba(255, 226, 245, 0.94)'
+      : 'rgba(198, 175, 255, 0.12)'
   )
   .labelsData([])
   .labelLat((d) => d.lat)
@@ -103,33 +103,39 @@ if (typeof globe.polygonCapCurvatureResolution === 'function') globe.polygonCapC
 
 const controls = globe.controls();
 controls.autoRotate = true;
-controls.autoRotateSpeed = 0.18;
+controls.autoRotateSpeed = 0.14;
 controls.enablePan = false;
 controls.enableDamping = true;
 controls.dampingFactor = 0.09;
-controls.rotateSpeed = 0.9;
-controls.zoomSpeed = 0.92;
-controls.minDistance = 105;
-controls.maxDistance = 255;
+controls.rotateSpeed = 0.88;
+controls.zoomSpeed = 0.88;
+controls.minDistance = 118;
+controls.maxDistance = 265;
 
-globe.pointOfView({ lat: 20, lng: 0, altitude: 1.85 }, 0);
+globe.pointOfView({ lat: 20, lng: 0, altitude: 2.02 }, 0);
 
 function styleScene() {
   if (!(window.THREE && typeof globe.scene === 'function')) return;
   const renderer = globe.renderer?.();
   if (renderer) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
+    renderer.toneMappingExposure = 1.12;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    const dpr = window.devicePixelRatio || 1;
+    renderer.setPixelRatio?.(Math.min(dpr, 1.8));
   }
 
   const mat = globe.globeMaterial?.();
   if (mat) {
-    mat.color?.set?.('#f7f6ff');
-    mat.emissive?.set?.('#060613');
-    mat.specular?.set?.('#ccb8ff');
-    mat.shininess = 18;
-    mat.bumpScale = 0.28;
+    mat.color?.set?.('#faf8ff');
+    mat.emissive?.set?.('#04040f');
+    mat.specular?.set?.('#dec9ff');
+    mat.shininess = 22;
+    mat.bumpScale = 0.32;
+    if (mat.map && renderer?.capabilities?.getMaxAnisotropy) {
+      mat.map.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      mat.map.needsUpdate = true;
+    }
     mat.needsUpdate = true;
   }
 
@@ -137,25 +143,25 @@ function styleScene() {
   scene.traverse((obj) => {
     if (obj?.isAmbientLight) {
       obj.color?.set?.('#c1b0ff');
-      obj.intensity = 0.18;
+      obj.intensity = 0.14;
     }
     if (obj?.isDirectionalLight) {
-      obj.color?.set?.('#d4e4ff');
-      obj.intensity = 0.82;
-      obj.position?.set?.(2.7, 1.9, -2.5);
+      obj.color?.set?.('#e2ecff');
+      obj.intensity = 0.9;
+      obj.position?.set?.(2.8, 2.0, -2.45);
     }
   });
 
   if (!scene.userData.magentaRim) {
-    const rim = new THREE.DirectionalLight('#ff80ce', 0.34);
-    rim.position.set(-2.9, 1.0, 2.4);
+    const rim = new THREE.DirectionalLight('#ff80ce', 0.30);
+    rim.position.set(-3.05, 1.1, 2.55);
     scene.add(rim);
     scene.userData.magentaRim = rim;
   }
 
   if (!scene.userData.cyanRim) {
-    const rim2 = new THREE.DirectionalLight('#72dcff', 0.20);
-    rim2.position.set(2.4, -0.4, 2.1);
+    const rim2 = new THREE.DirectionalLight('#72dcff', 0.24);
+    rim2.position.set(2.55, -0.35, 2.25);
     scene.add(rim2);
     scene.userData.cyanRim = rim2;
   }
@@ -211,7 +217,7 @@ function nearestCountry(lat, lng) {
 
 function updateHud(text = '') {
   const pov = globe.pointOfView();
-  const band = pov.altitude <= 1.35 ? 'Local zoom' : pov.altitude <= 1.65 ? 'Country zoom' : 'World zoom';
+  const band = pov.altitude <= 1.45 ? 'Local zoom' : pov.altitude <= 1.78 ? 'Country zoom' : 'World zoom';
   const lat = Number(pov.lat || 0).toFixed(2);
   const lng = Number(pov.lng || 0).toFixed(2);
   els.meta.textContent = text || `${band} • ${lat}, ${lng}`;
@@ -232,7 +238,7 @@ function refreshLabels() {
   const lat = Number(pov.lat || 0);
   const lng = Number(pov.lng || 0);
   const altitude = Number(pov.altitude || 2);
-  const count = altitude <= 1.35 ? 12 : altitude <= 1.65 ? 9 : 6;
+  const count = altitude <= 1.45 ? 12 : altitude <= 1.78 ? 9 : 6;
 
   const picks = [...state.centers]
     .map((c) => ({ ...c, d: angularDistance(lat, lng, c.lat, c.lng) }))
@@ -364,7 +370,7 @@ async function loadNearbyFeed(lat, lng, label = '') {
 async function selectCountry({ iso, name, lat, lng }) {
   state.selected = { type: 'country', code: iso, name, lat, lng };
   globe.polygonsData(state.polygons);
-  globe.pointOfView({ lat, lng, altitude: 1.34 }, 700);
+  globe.pointOfView({ lat, lng, altitude: 1.44 }, 700);
   setPing(lat, lng);
   els.region.textContent = `Region: ${name}`;
   updateHud(`Country focus • ${lat.toFixed(2)}, ${lng.toFixed(2)}`);
@@ -377,7 +383,7 @@ async function pingAt(lat, lng) {
   const label = near?.name || 'Nearby';
   state.selected = { type: 'region', code: near?.iso || '', name: label, lat, lng };
   globe.polygonsData(state.polygons);
-  globe.pointOfView({ lat, lng, altitude: 1.32 }, 520);
+  globe.pointOfView({ lat, lng, altitude: 1.40 }, 520);
   setPing(lat, lng);
   els.region.textContent = `Region: ${label}`;
   updateHud(`Signal dropped • ${lat.toFixed(2)}, ${lng.toFixed(2)}`);
@@ -388,12 +394,19 @@ async function pingAt(lat, lng) {
 function worldReset() {
   state.selected = { type: 'world', name: 'World', code: '', lat: 20, lng: 0 };
   globe.polygonsData(state.polygons);
-  globe.pointOfView({ lat: 20, lng: 0, altitude: 1.85 }, 700);
+  globe.pointOfView({ lat: 20, lng: 0, altitude: 1.98 }, 700);
   globe.pointsData([]);
   globe.ringsData([]);
   els.region.textContent = 'Region: World';
   updateHud('Tap globe to drop signal');
   refreshLabels();
+}
+
+function introReveal() {
+  globe.pointOfView({ lat: 16, lng: -10, altitude: 2.08 }, 0);
+  setTimeout(() => {
+    globe.pointOfView({ lat: 20, lng: 0, altitude: 1.98 }, 1300);
+  }, 120);
 }
 
 function openSearch() {
@@ -526,6 +539,7 @@ async function init() {
   styleScene();
   bind();
   await loadCountries();
+  introReveal();
   updateHud('Tap globe to drop signal');
   refreshLabels();
   loadGlobalFeed();
