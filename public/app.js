@@ -4,6 +4,7 @@ const labelsToggleBtn = document.getElementById('labels-toggle');
 const openSignalBtn = document.getElementById('open-signal');
 const locationBadge = document.getElementById('location-badge');
 const regionChip = document.getElementById('region-chip');
+const detailChip = document.getElementById('detail-chip');
 const statusBanner = document.getElementById('status-banner');
 
 const feedSheet = document.getElementById('feed-sheet');
@@ -61,6 +62,9 @@ const ART = {
   text: '#E7E9EF',
   textSub: '#BFC5D3'
 };
+
+const GLOBE_TEXTURE_URL = '/vendor/earth-night.jpg';
+const GLOBE_BUMP_URL = '/vendor/earth-topology.png';
 
 const MAJOR_CITY_LABELS = [
   { label: 'New York', lat: 40.7128, lng: -74.0060, color: 'rgba(255, 221, 166, 0.96)' },
@@ -136,11 +140,11 @@ const globe = Globe({
   }
 })(globeMount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
-  .bumpImageUrl('/vendor/earth-topology.png')
+  .globeImageUrl(GLOBE_TEXTURE_URL)
+  .bumpImageUrl(GLOBE_BUMP_URL)
   .showAtmosphere(true)
-  .atmosphereColor('#334455')
-  .atmosphereAltitude(0.065)
+  .atmosphereColor(ART.rimHalo)
+  .atmosphereAltitude(0.055)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
@@ -184,12 +188,14 @@ const globe = Globe({
   .pathPointLng((p) => p.lng)
   .pathColor((d) => {
     const altitude = Number(globe.pointOfView()?.altitude) || 2;
-    if (altitude > 1.62) return 'rgba(0,0,0,0)';
+    if (altitude > 1.74) return 'rgba(0,0,0,0)';
+    if (altitude > 1.45) return 'rgba(201, 164, 106, 0.12)';
     return d.color;
   })
   .pathStroke((d) => {
     const altitude = Number(globe.pointOfView()?.altitude) || 2;
-    if (altitude > 1.62) return 0;
+    if (altitude > 1.74) return 0;
+    if (altitude > 1.45) return Math.max(0.12, d.stroke * 0.62);
     return d.stroke;
   })
   .pathResolution(2)
@@ -244,22 +250,31 @@ if (typeof globe.renderer === 'function') {
 function enforceGlobeVisualTheme() {
   if (!(window.THREE && typeof globe.globeMaterial === 'function')) return;
 
-  globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
+  globe.globeImageUrl(GLOBE_TEXTURE_URL);
   globe.globeMaterial(new THREE.MeshPhongMaterial({
-    color: '#0a1f35',
-    emissive: '#0a1f35',
-    specular: '#334455',
-    shininess: 16
+    color: ART.landA,
+    emissive: '#0a111d',
+    specular: ART.gold,
+    shininess: 18
   }));
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: '#334455',
-      opacity: 0.1,
+      color: ART.rimHalo,
+      opacity: 0.11,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.065);
+    globe.atmosphereAltitude(0.055);
+  }
+
+  if (typeof globe.renderer === 'function') {
+    const renderer = globe.renderer();
+    if (renderer) {
+      renderer.toneMapping = window.THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = isMobile ? 1.03 : 1.08;
+      renderer.outputColorSpace = window.THREE.SRGBColorSpace;
+    }
   }
 
   if (typeof globe.scene === 'function') {
@@ -267,26 +282,26 @@ function enforceGlobeVisualTheme() {
     if (scene?.traverse) {
       scene.traverse((obj) => {
         if (obj?.isAmbientLight) {
-          obj.color?.set?.('#BFC5D3');
-          obj.intensity = 0.2;
+          obj.color?.set?.(ART.textSub);
+          obj.intensity = 0.19;
         }
         if (obj?.isDirectionalLight) {
-          obj.color?.set?.('#F2D8AE');
-          obj.intensity = 0.86;
-          if (obj?.position?.set) obj.position.set(2.8, 1.6, -2.8);
+          obj.color?.set?.(ART.rimCore);
+          obj.intensity = 0.82;
+          if (obj?.position?.set) obj.position.set(2.55, 1.55, -2.7);
         }
       });
     }
 
     if (window.THREE && !scene.userData.cwnRimLight) {
-      const rim = new THREE.DirectionalLight('#E7C48A', 0.42);
-      rim.position.set(3.1, 1.2, -2.4);
+      const rim = new THREE.DirectionalLight(ART.rimHalo, 0.39);
+      rim.position.set(3.05, 1.05, -2.35);
       scene.add(rim);
       scene.userData.cwnRimLight = rim;
     } else if (scene.userData.cwnRimLight) {
-      scene.userData.cwnRimLight.color?.set?.('#E7C48A');
-      scene.userData.cwnRimLight.intensity = 0.42;
-      scene.userData.cwnRimLight.position?.set?.(3.1, 1.2, -2.4);
+      scene.userData.cwnRimLight.color?.set?.(ART.rimHalo);
+      scene.userData.cwnRimLight.intensity = 0.39;
+      scene.userData.cwnRimLight.position?.set?.(3.05, 1.05, -2.35);
     }
   }
 }
@@ -715,9 +730,10 @@ function getReticleTarget() {
 
 function updateCenterUI() {
   const c = getCurrentCenter();
+  const altitude = Number(globe.pointOfView()?.altitude) || 2;
   state.globeCenter = { lat: c.lat, lng: c.lng };
 
-  if (!isInteracting && state.labelsVisible && Date.now() - state.lastLabelRefresh > 5200) {
+  if (!isInteracting && state.labelsVisible && Date.now() - state.lastLabelRefresh > 3200) {
     state.lastLabelRefresh = Date.now();
     refreshLabels(c);
   }
@@ -725,11 +741,18 @@ function updateCenterUI() {
   if (state.mode === 'globe') {
     const nearest = findNearestCountry(c.lat, c.lng);
     regionChip.textContent = nearest ? `Region: ${nearest.label}` : 'Region: Open ocean';
+    const zoomBand = altitude <= 1.33 ? 'Local zoom' : altitude <= 1.65 ? 'Country zoom' : 'World zoom';
+    setDetailChip(`${zoomBand} · ${c.lat.toFixed(2)}, ${c.lng.toFixed(2)}`);
   }
 }
 
 function setLocationBadge(text) {
   locationBadge.textContent = text || 'World View';
+}
+
+function setDetailChip(text) {
+  if (!detailChip) return;
+  detailChip.textContent = text || 'Tap globe to ping a location';
 }
 
 function buildShareUrl() {
@@ -955,6 +978,7 @@ async function loadSignalFeed() {
   hideStatus();
   lastFeedLoader = loadSignalFeed;
   state.feedScope = 'global';
+  setDetailChip('Global view · rotate, zoom, and tap to ping');
   updateSharePingVisibility();
   openFeedSheet('Click News · World');
   renderFeed(state.feed);
@@ -1006,6 +1030,7 @@ async function loadCountryFeed(code, name, center) {
   setPingVisual(center.lat, center.lng, '#ffd166', center);
   focusGlobe(center.lat, center.lng, 1.35);
   regionChip.textContent = `Region: ${name}`;
+  setDetailChip(`Country focus · ${center.lat.toFixed(2)}, ${center.lng.toFixed(2)}`);
   savePing(name, center.lat, center.lng);
   state.feedScope = 'local';
   updateSharePingVisibility();
@@ -1062,6 +1087,7 @@ async function pingAt(lat, lng, labelHint = '', queryHint = '') {
     if (req !== activeRequest) return;
 
     const finalName = labelHint || data.location || nearest?.label || `${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+    const geoParts = [data?.geo?.city, data?.geo?.state, data?.geo?.country].filter(Boolean);
     state.selectedLocation = {
       type: 'region',
       code: data.code || nearest?.iso || state.selectedLocation.code,
@@ -1069,6 +1095,7 @@ async function pingAt(lat, lng, labelHint = '', queryHint = '') {
       latlng: { lat, lng }
     };
     setLocationBadge(finalName);
+    setDetailChip(geoParts.length ? geoParts.join(' · ') : `Pinned @ ${lat.toFixed(2)}, ${lng.toFixed(2)}`);
     savePing(finalName, lat, lng);
 
     state.feed = data.stories || [];
@@ -1326,6 +1353,7 @@ async function init() {
   loadSavedPings();
   renderSavedPings();
   renderFeed(state.feed);
+  setDetailChip('Global view · rotate, zoom, and tap to ping');
   bindEvents();
   resizeGlobe();
 

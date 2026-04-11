@@ -77,14 +77,30 @@ async function parseFeed(url, limit = 10) {
 }
 
 async function parseFirstAvailable(urls = [], limit = 10) {
+  const merged = [];
+  const seen = new Set();
+
   for (const url of urls) {
-    if (!url) continue;
+    if (!url || merged.length >= limit) continue;
     try {
       const stories = await parseFeed(url, limit);
-      if (stories.length) return stories;
+      for (const story of stories) {
+        const key = `${String(story?.title || '').toLowerCase()}|${String(story?.link || '').toLowerCase()}`;
+        if (!story?.title || !story?.link || seen.has(key)) continue;
+        seen.add(key);
+        merged.push(story);
+        if (merged.length >= limit) break;
+      }
     } catch {
       // Try next candidate.
     }
+  }
+
+  if (merged.length) {
+    return merged.slice(0, limit).map((story, idx) => ({
+      ...story,
+      rank: idx + 1
+    }));
   }
 
   const cachedFallback = [...cache.values()]
@@ -257,26 +273,30 @@ app.get('/api/nearby-news', async (req, res) => {
       };
     }
 
-    const primaryQuery =
-      queryHint ||
-      [geo.city, geo.state, geo.country].filter(Boolean).join(' ') ||
-      labelHint ||
-      `${lat.toFixed(2)} ${lng.toFixed(2)}`;
+    const cityStateCountry = [geo.city, geo.state, geo.country].filter(Boolean).join(' ');
+    const regionalHint = [geo.state, geo.country].filter(Boolean).join(' ');
+    const primaryQuery = queryHint || cityStateCountry || labelHint || `${lat.toFixed(2)} ${lng.toFixed(2)}`;
 
     const countryCode = safeCode(geo.countryCode || 'US');
+    const queryPlan = [
+      { tier: 'local', query: `${primaryQuery} breaking news`, gl: countryCode },
+      { tier: 'local', query: `${primaryQuery} latest headlines`, gl: countryCode },
+      regionalHint ? { tier: 'admin1', query: `${regionalHint} regional news`, gl: countryCode } : null,
+      geo.country ? { tier: 'country', query: `${geo.country} breaking news`, gl: countryCode } : null,
+      geo.country ? { tier: 'country-backup', query: `${geo.country} breaking news`, gl: 'US' } : null
+    ].filter(Boolean);
+
     const stories = await parseFirstAvailable([
-      googleSearchUrl(`${primaryQuery} news`, countryCode),
-      googleSearchUrl(`${primaryQuery} headlines`, countryCode),
-      geo.country ? googleSearchUrl(`${geo.country} breaking news`, countryCode) : null,
-      geo.country ? googleSearchUrl(`${geo.country} breaking news`, 'US') : null,
+      ...queryPlan.map((item) => googleSearchUrl(item.query, item.gl)),
       ...WORLD_FALLBACK_FEEDS
-    ], 10);
+    ], 12);
 
     res.json({
       ok: true,
       location: labelHint || geo.label,
       code: countryCode,
       geo: { lat, lng, ...geo },
+      queryPlan,
       stories
     });
   } catch {
