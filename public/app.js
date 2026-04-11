@@ -117,11 +117,11 @@ const globe = Globe({
   }
 })(globeMount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('/vendor/earth-reference-final.jpg')
+  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
   .showAtmosphere(true)
-  .atmosphereColor('#b4beca')
-  .atmosphereAltitude(0.03)
+  .atmosphereColor('#334455')
+  .atmosphereAltitude(0.07)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
@@ -206,22 +206,22 @@ if (typeof globe.renderer === 'function') {
 function enforceGlobeVisualTheme() {
   if (!(window.THREE && typeof globe.globeMaterial === 'function')) return;
 
-  globe.globeImageUrl('/vendor/earth-reference-final.jpg');
+  globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
   globe.globeMaterial(new THREE.MeshPhongMaterial({
-    color: '#1c222b',
-    emissive: '#030405',
-    specular: '#474f5c',
-    shininess: 5
+    color: '#0a1f35',
+    emissive: '#0a1f35',
+    specular: '#334455',
+    shininess: 6
   }));
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: '#b4beca',
-      opacity: 0.05,
+      color: '#334455',
+      opacity: 0.18,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.03);
+    globe.atmosphereAltitude(0.07);
   }
 }
 
@@ -486,23 +486,12 @@ function setPingVisual(lat, lng, color = '#ffd166', countryCenter = null) {
     {
       lat,
       lng,
-      color: 'rgba(216, 175, 98, 0.2)',
-      maxRadius: 2.6,
-      speed: 0.62,
+      color: 'rgba(216, 175, 98, 0.18)',
+      maxRadius: 2.2,
+      speed: 0.55,
       repeatPeriod: 1850
     }
   ];
-
-  if (countryCenter?.lat != null && countryCenter?.lng != null) {
-    ringPayload.push({
-      lat: countryCenter.lat,
-      lng: countryCenter.lng,
-      color: 'rgba(255, 209, 120, 0.16)',
-      maxRadius: 5.2,
-      speed: 0.55,
-      repeatPeriod: 1850
-    });
-  }
 
   globe.pointsData([
     { lat, lng, color: 'rgba(255, 214, 138, 0.16)', radius: 0.9, altitude: 0.028 },
