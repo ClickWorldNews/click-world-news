@@ -532,7 +532,13 @@ function loadFeedCache() {
 
 function persistSelectedLocation() {
   try {
-    localStorage.setItem(SELECTED_LOCATION_KEY, JSON.stringify(state.selectedLocation));
+    localStorage.setItem(
+      SELECTED_LOCATION_KEY,
+      JSON.stringify({
+        ...state.selectedLocation,
+        savedAt: Date.now()
+      })
+    );
   } catch {
     // Ignore storage errors.
   }
@@ -559,20 +565,32 @@ function loadSelectedLocation() {
     const lat = Number(raw?.latlng?.lat);
     const lng = Number(raw?.latlng?.lng);
     const validType = ['world', 'country', 'region'].includes(raw?.type);
+    const savedAt = Number(raw?.savedAt || 0);
+    const recentlySaved = Number.isFinite(savedAt) && Date.now() - savedAt < 1000 * 60 * 60 * 24;
 
     if (!validType || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+      localStorage.removeItem(SELECTED_LOCATION_KEY);
       return;
     }
 
-    // Avoid confusing random defaults: keep World View unless explicitly deep-linked.
-    if (raw?.type === 'world') {
+    // Avoid confusing random defaults from stale state.
+    if (raw?.type === 'world' || !recentlySaved) {
       state.selectedLocation = {
         type: 'world',
         code: 'US',
         name: 'World View',
         latlng: { lat: 20, lng: 0 }
       };
+      if (!recentlySaved) localStorage.removeItem(SELECTED_LOCATION_KEY);
+      return;
     }
+
+    state.selectedLocation = {
+      type: raw.type,
+      code: typeof raw.code === 'string' ? raw.code : 'US',
+      name: typeof raw.name === 'string' ? raw.name : 'Pinned location',
+      latlng: { lat, lng }
+    };
   } catch {
     // Ignore invalid storage.
   }
