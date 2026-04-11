@@ -117,11 +117,11 @@ const globe = Globe({
   }
 })(globeMount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
+  .globeImageUrl('/vendor/earth-reference-final.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
   .showAtmosphere(true)
-  .atmosphereColor('#334455')
-  .atmosphereAltitude(0.07)
+  .atmosphereColor('#b4beca')
+  .atmosphereAltitude(0.03)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
@@ -185,12 +185,12 @@ const globe = Globe({
 const htmlLabelsSupported = false;
 
 const controls = globe.controls();
-globe.pointOfView({ lat: 20, lng: 0, altitude: 2.05 }, 0);
+globe.pointOfView({ lat: 20, lng: 0, altitude: 1.84 }, 0);
 controls.autoRotate = true;
 controls.autoRotateSpeed = isMobile ? 0.08 : 0.12;
 controls.enablePan = false;
-controls.minDistance = 125;
-controls.maxDistance = 300;
+controls.minDistance = 118;
+controls.maxDistance = 280;
 
 if (typeof globe.polygonCapCurvatureResolution === 'function') {
   globe.polygonCapCurvatureResolution(isMobile ? 2 : 4);
@@ -206,22 +206,22 @@ if (typeof globe.renderer === 'function') {
 function enforceGlobeVisualTheme() {
   if (!(window.THREE && typeof globe.globeMaterial === 'function')) return;
 
-  globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
+  globe.globeImageUrl('/vendor/earth-reference-final.jpg');
   globe.globeMaterial(new THREE.MeshPhongMaterial({
-    color: '#0a1f35',
-    emissive: '#0a1f35',
-    specular: '#334455',
-    shininess: 6
+    color: '#1c222b',
+    emissive: '#030405',
+    specular: '#474f5c',
+    shininess: 5
   }));
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: '#334455',
-      opacity: 0.18,
+      color: '#b4beca',
+      opacity: 0.05,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.07);
+    globe.atmosphereAltitude(0.03);
   }
 }
 
