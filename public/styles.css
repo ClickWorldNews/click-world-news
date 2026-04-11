@@ -437,6 +437,37 @@ body {
   display: none !important;
 }
 
+@media (max-width: 430px) {
+  .brand-text {
+    font-size: 0.84rem;
+    letter-spacing: 0.055em;
+  }
+
+  .chip {
+    font-size: 0.74rem;
+  }
+
+  .chip.sub {
+    font-size: 0.69rem;
+  }
+
+  .bottom-bar {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .bottom-btn {
+    min-height: 38px;
+    font-size: 0.74rem;
+  }
+
+  .location-badge {
+    font-size: 0.7rem;
+    padding: 10px 6px;
+  }
+}
+
 @media (min-width: 980px) {
   .top-nav,
   .bottom-bar,

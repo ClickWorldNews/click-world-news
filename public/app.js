@@ -63,7 +63,7 @@ const ART = {
   textSub: '#BFC5D3'
 };
 
-const GLOBE_TEXTURE_URL = '/vendor/earth-night.jpg';
+const GLOBE_TEXTURE_URL = '/vendor/earth-balanced-v2.jpg';
 const GLOBE_BUMP_URL = '/vendor/earth-topology.png';
 const USE_ADMIN_BOUNDARIES = false;
 
@@ -149,18 +149,18 @@ const globe = Globe({
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.056 : 0.004))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(226, 192, 138, 0.34)'
-      : 'rgba(58, 72, 96, 0.72)'
+      ? 'rgba(226, 192, 138, 0.28)'
+      : 'rgba(54, 66, 88, 0.64)'
   )
   .polygonSideColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(154, 122, 74, 0.3)'
-      : 'rgba(22, 30, 44, 0.38)'
+      ? 'rgba(154, 122, 74, 0.26)'
+      : 'rgba(19, 27, 40, 0.34)'
   )
   .polygonStrokeColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(242, 216, 174, 0.98)'
-      : 'rgba(201, 164, 106, 0.62)'
+      ? 'rgba(242, 216, 174, 0.92)'
+      : 'rgba(201, 164, 106, 0.46)'
   )
   .polygonsTransitionDuration(0)
   .labelsData([])
@@ -226,10 +226,12 @@ const htmlLabelsSupported = false;
 const controls = globe.controls();
 globe.pointOfView({ lat: 20, lng: 0, altitude: 1.84 }, 0);
 controls.autoRotate = true;
-controls.autoRotateSpeed = isMobile ? 0.055 : 0.085;
+controls.autoRotateSpeed = isMobile ? 0.05 : 0.078;
 controls.enablePan = false;
 controls.enableDamping = true;
-controls.dampingFactor = 0.08;
+controls.dampingFactor = isMobile ? 0.1 : 0.085;
+controls.rotateSpeed = isMobile ? 0.72 : 0.85;
+controls.zoomSpeed = isMobile ? 0.85 : 0.92;
 controls.minDistance = 112;
 controls.maxDistance = 255;
 
@@ -255,11 +257,11 @@ function enforceGlobeVisualTheme() {
   globe.globeImageUrl(GLOBE_TEXTURE_URL);
   const globeMat = globe.globeMaterial?.();
   if (globeMat) {
-    globeMat.color?.set?.('#5f7088');
-    globeMat.emissive?.set?.('#0b1220');
-    globeMat.specular?.set?.('#f0cd93');
-    globeMat.shininess = 34;
-    globeMat.bumpScale = 0.18;
+    globeMat.color?.set?.('#536276');
+    globeMat.emissive?.set?.('#090f1b');
+    globeMat.specular?.set?.('#e9c78f');
+    globeMat.shininess = 30;
+    globeMat.bumpScale = 0.15;
     globeMat.needsUpdate = true;
   }
 
@@ -579,10 +581,10 @@ function buildLabelPoints(anchor = state.globeCenter) {
 
   const zoomProfile =
     altitude <= 1.28
-      ? { countries: isMobile ? 14 : 22, cities: isMobile ? 7 : 12, states: isMobile ? 7 : 12, admin1: isMobile ? 11 : 18, maxLabels: isMobile ? 18 : 30, spacing: isMobile ? 0.2 : 0.16 }
+      ? { countries: isMobile ? 10 : 18, cities: isMobile ? 5 : 10, states: isMobile ? 4 : 9, admin1: isMobile ? 6 : 12, maxLabels: isMobile ? 14 : 26, spacing: isMobile ? 0.24 : 0.18 }
       : altitude <= 1.55
-        ? { countries: isMobile ? 12 : 18, cities: isMobile ? 5 : 8, states: isMobile ? 4 : 7, admin1: isMobile ? 6 : 10, maxLabels: isMobile ? 15 : 24, spacing: isMobile ? 0.24 : 0.19 }
-        : { countries: isMobile ? 8 : 12, cities: isMobile ? 3 : 6, states: isMobile ? 2 : 3, admin1: isMobile ? 3 : 6, maxLabels: isMobile ? 11 : 18, spacing: isMobile ? 0.3 : 0.24 };
+        ? { countries: isMobile ? 8 : 14, cities: isMobile ? 3 : 7, states: isMobile ? 2 : 5, admin1: isMobile ? 3 : 7, maxLabels: isMobile ? 11 : 20, spacing: isMobile ? 0.28 : 0.22 }
+        : { countries: isMobile ? 6 : 10, cities: isMobile ? 2 : 5, states: isMobile ? 1 : 2, admin1: isMobile ? 2 : 4, maxLabels: isMobile ? 8 : 14, spacing: isMobile ? 0.34 : 0.27 };
 
   const major = countryCenters
     .filter((c) => MAJOR_LABEL_ISO.has(c.iso))
@@ -1108,6 +1110,15 @@ async function pingAt(lat, lng, labelHint = '', queryHint = '') {
 
     const finalName = labelHint || data.location || nearest?.label || `${lat.toFixed(2)}, ${lng.toFixed(2)}`;
     const geoParts = [data?.geo?.city, data?.geo?.state, data?.geo?.country].filter(Boolean);
+    const tierLabelMap = {
+      local: 'Local',
+      admin1: 'State/Region',
+      country: 'Country',
+      'country-backup': 'Country backup',
+      'global-fallback': 'Global fallback'
+    };
+    const tierLabel = tierLabelMap[data?.tierUsed] || 'Nearby';
+
     state.selectedLocation = {
       type: 'region',
       code: data.code || nearest?.iso || state.selectedLocation.code,
@@ -1115,7 +1126,8 @@ async function pingAt(lat, lng, labelHint = '', queryHint = '') {
       latlng: { lat, lng }
     };
     setLocationBadge(finalName);
-    setDetailChip(geoParts.length ? geoParts.join(' · ') : `Pinned @ ${lat.toFixed(2)}, ${lng.toFixed(2)}`);
+    const detail = geoParts.length ? geoParts.join(' · ') : `Pinned @ ${lat.toFixed(2)}, ${lng.toFixed(2)}`;
+    setDetailChip(`${tierLabel} · ${detail}`);
     savePing(finalName, lat, lng);
 
     state.feed = data.stories || [];
@@ -1198,7 +1210,19 @@ function bindEvents() {
   let closeStartY = null;
   let closeDelta = 0;
 
-  window.addEventListener('resize', resizeGlobe);
+  window.addEventListener('resize', () => {
+    resizeGlobe();
+    enforceGlobeVisualTheme();
+    refreshLabels(getCurrentCenter());
+  });
+
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      resizeGlobe();
+      enforceGlobeVisualTheme();
+      refreshLabels(getCurrentCenter());
+    }, 120);
+  });
 
   pingCenterBtn.addEventListener('click', async () => {
     const target = getReticleTarget();

@@ -76,45 +76,76 @@ async function parseFeed(url, limit = 10) {
   return data;
 }
 
+function dedupeStories(stories = [], limit = 10) {
+  const seen = new Set();
+  const out = [];
+
+  for (const story of stories) {
+    const key = `${String(story?.title || '').toLowerCase()}|${String(story?.link || '').toLowerCase()}`;
+    if (!story?.title || !story?.link || seen.has(key)) continue;
+    seen.add(key);
+    out.push(story);
+    if (out.length >= limit) break;
+  }
+
+  return out.map((story, idx) => ({ ...story, rank: idx + 1 }));
+}
+
 async function parseFirstAvailable(urls = [], limit = 10) {
   const merged = [];
-  const seen = new Set();
 
   for (const url of urls) {
     if (!url || merged.length >= limit) continue;
     try {
       const stories = await parseFeed(url, limit);
-      for (const story of stories) {
-        const key = `${String(story?.title || '').toLowerCase()}|${String(story?.link || '').toLowerCase()}`;
-        if (!story?.title || !story?.link || seen.has(key)) continue;
-        seen.add(key);
-        merged.push(story);
-        if (merged.length >= limit) break;
-      }
+      merged.push(...stories);
     } catch {
       // Try next candidate.
     }
   }
 
-  if (merged.length) {
-    return merged.slice(0, limit).map((story, idx) => ({
-      ...story,
-      rank: idx + 1
-    }));
-  }
+  const deduped = dedupeStories(merged, limit);
+  if (deduped.length) return deduped;
 
   const cachedFallback = [...cache.values()]
     .map((entry) => entry?.data)
     .find((data) => Array.isArray(data) && data.length);
 
   if (cachedFallback?.length) {
-    return cachedFallback.slice(0, limit).map((story, idx) => ({
-      ...story,
-      rank: idx + 1
-    }));
+    return dedupeStories(cachedFallback, limit);
   }
 
   return [];
+}
+
+async function parseTieredQueryPlan(queryPlan = [], worldFallback = [], limit = 12) {
+  for (const step of queryPlan) {
+    const query = sanitizeText(step?.query || '');
+    const gl = safeCode(step?.gl || 'US');
+    if (!query) continue;
+
+    const stories = await parseFirstAvailable([
+      googleSearchUrl(query, gl),
+      googleSearchUrl(query, 'US')
+    ], limit);
+
+    if (stories.length >= 3) {
+      return {
+        stories,
+        tierUsed: step.tier || 'local',
+        queryUsed: query,
+        glUsed: gl
+      };
+    }
+  }
+
+  const fallbackStories = await parseFirstAvailable(worldFallback, limit);
+  return {
+    stories: fallbackStories,
+    tierUsed: 'global-fallback',
+    queryUsed: '',
+    glUsed: 'US'
+  };
 }
 
 const googleHeadlinesUrl = (code = 'US') => {
@@ -286,10 +317,7 @@ app.get('/api/nearby-news', async (req, res) => {
       geo.country ? { tier: 'country-backup', query: `${geo.country} breaking news`, gl: 'US' } : null
     ].filter(Boolean);
 
-    const stories = await parseFirstAvailable([
-      ...queryPlan.map((item) => googleSearchUrl(item.query, item.gl)),
-      ...WORLD_FALLBACK_FEEDS
-    ], 12);
+    const planResult = await parseTieredQueryPlan(queryPlan, WORLD_FALLBACK_FEEDS, 12);
 
     res.json({
       ok: true,
@@ -297,7 +325,10 @@ app.get('/api/nearby-news', async (req, res) => {
       code: countryCode,
       geo: { lat, lng, ...geo },
       queryPlan,
-      stories
+      tierUsed: planResult.tierUsed,
+      queryUsed: planResult.queryUsed,
+      glUsed: planResult.glUsed,
+      stories: planResult.stories
     });
   } catch {
     res.status(500).json({ ok: false, error: 'Could not load nearby location news.' });
