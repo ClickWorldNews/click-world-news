@@ -88,17 +88,17 @@ const globe = Globe({
   .backgroundColor('rgba(0,0,0,0)')
   .globeImageUrl('/vendor/earth-night.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
-  .showAtmosphere(!isMobile)
-  .atmosphereColor('#161d28')
-  .atmosphereAltitude(isMobile ? 0 : 0.01)
+  .showAtmosphere(false)
+  .atmosphereColor('#0d121a')
+  .atmosphereAltitude(0)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.01))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(182, 197, 212, 0.34)'
-      : 'rgba(118, 130, 144, 0.08)'
+      ? 'rgba(164, 181, 196, 0.28)'
+      : 'rgba(102, 115, 130, 0.07)'
   )
-  .polygonSideColor(() => 'rgba(76, 86, 98, 0.08)')
-  .polygonStrokeColor(() => 'rgba(150, 166, 186, 0.18)')
+  .polygonSideColor(() => 'rgba(66, 76, 90, 0.07)')
+  .polygonStrokeColor(() => 'rgba(128, 145, 168, 0.16)')
   .polygonsTransitionDuration(0)
   .labelsData([])
   .labelLat((d) => d.lat)
@@ -160,11 +160,11 @@ if (typeof globe.polygonCapCurvatureResolution === 'function') {
 if (typeof globe.globeMaterial === 'function' && window.THREE) {
   const material = globe.globeMaterial();
   if (material) {
-    material.color = new THREE.Color('#b7bec8');
+    material.color = new THREE.Color('#7a8593');
     material.emissive = new THREE.Color('#000000');
-    material.emissiveIntensity = isMobile ? 0.016 : 0.012;
-    material.shininess = isMobile ? 2 : 3;
-    material.specular = new THREE.Color('#0a1018');
+    material.emissiveIntensity = 0;
+    material.shininess = 1;
+    material.specular = new THREE.Color('#04080f');
   }
 }
 
