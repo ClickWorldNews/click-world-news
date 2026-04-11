@@ -48,19 +48,20 @@ const NAME_OVERRIDES = {
 };
 
 const ART = {
-  oceanA: '#070B16',
-  oceanB: '#0C1224',
-  oceanC: '#161C2F',
-  landA: '#2D3A52',
-  landB: '#4A5870',
-  landHi: '#C9D3E2',
-  goldDim: '#9A7A4A',
-  gold: '#C9A46A',
-  goldHi: '#E2C08A',
-  rimCore: '#F2D8AE',
-  rimHalo: '#E7C48A',
-  text: '#E7E9EF',
-  textSub: '#BFC5D3'
+  oceanA: '#060B14',
+  oceanB: '#0B1E3A',
+  oceanC: '#142038',
+  landA: '#243650',
+  landB: '#355177',
+  landHi: '#BFD4F2',
+  cyan: '#22D3EE',
+  cyanHi: '#67E8F9',
+  amber: '#F59E0B',
+  amberHi: '#FCD34D',
+  rimCore: '#5D84C0',
+  rimHalo: '#1A3B6B',
+  text: '#E6EDF7',
+  textSub: '#A9B8CF'
 };
 
 const GLOBE_TEXTURE_URL = '/vendor/earth-reference-final.jpg';
@@ -149,18 +150,18 @@ const globe = Globe({
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.056 : 0.004))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(224, 191, 136, 0.22)'
-      : 'rgba(44, 54, 72, 0.56)'
+      ? 'rgba(34, 211, 238, 0.20)'
+      : 'rgba(39, 57, 86, 0.52)'
   )
   .polygonSideColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(146, 114, 70, 0.2)'
-      : 'rgba(16, 22, 33, 0.3)'
+      ? 'rgba(13, 95, 120, 0.24)'
+      : 'rgba(11, 20, 35, 0.30)'
   )
   .polygonStrokeColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(242, 216, 174, 0.84)'
-      : 'rgba(201, 164, 106, 0.33)'
+      ? 'rgba(103, 232, 249, 0.90)'
+      : 'rgba(93, 132, 192, 0.40)'
   )
   .polygonsTransitionDuration(0)
   .labelsData([])
@@ -174,7 +175,7 @@ const globe = Globe({
   })
   .labelDotRadius(() => (isMobile ? 0.06 : 0.08))
   .labelAltitude(() => 0.048)
-  .labelColor((d) => d?.color || 'rgba(231, 233, 239, 0.95)')
+  .labelColor((d) => d?.color || 'rgba(230, 237, 247, 0.96)')
   .labelResolution(isMobile ? 4 : 8)
   .pointsData([])
   .pointLat((d) => d.lat)
@@ -189,8 +190,8 @@ const globe = Globe({
   .pathPointLng((p) => p.lng)
   .pathColor((d) => {
     const altitude = Number(globe.pointOfView()?.altitude) || 2;
-    const alpha = Math.max(0.08, Math.min(0.48, 0.62 - (altitude - 1) * 0.3));
-    return `rgba(201, 164, 106, ${alpha.toFixed(3)})`;
+    const alpha = Math.max(0.1, Math.min(0.56, 0.68 - (altitude - 1) * 0.32));
+    return `rgba(34, 211, 238, ${alpha.toFixed(3)})`;
   })
   .pathStroke((d) => {
     const altitude = Number(globe.pointOfView()?.altitude) || 2;
@@ -257,29 +258,29 @@ function enforceGlobeVisualTheme() {
   globe.globeImageUrl(GLOBE_TEXTURE_URL);
   const globeMat = globe.globeMaterial?.();
   if (globeMat) {
-    globeMat.color?.set?.('#48576a');
-    globeMat.emissive?.set?.('#080d17');
-    globeMat.specular?.set?.('#d8b987');
-    globeMat.shininess = 22;
-    globeMat.bumpScale = 0.12;
+    globeMat.color?.set?.('#2f4e7a');
+    globeMat.emissive?.set?.('#081427');
+    globeMat.specular?.set?.('#67e8f9');
+    globeMat.shininess = 28;
+    globeMat.bumpScale = 0.14;
     globeMat.needsUpdate = true;
   }
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: ART.rimHalo,
-      opacity: 0.14,
+      color: '#1a3b6b',
+      opacity: 0.22,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.064);
+    globe.atmosphereAltitude(0.072);
   }
 
   if (typeof globe.renderer === 'function') {
     const renderer = globe.renderer();
     if (renderer) {
       renderer.toneMapping = window.THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = isMobile ? 0.92 : 0.98;
+      renderer.toneMappingExposure = isMobile ? 1.0 : 1.06;
       renderer.outputColorSpace = window.THREE.SRGBColorSpace;
 
       const mat = globe.globeMaterial?.();
@@ -296,26 +297,26 @@ function enforceGlobeVisualTheme() {
     if (scene?.traverse) {
       scene.traverse((obj) => {
         if (obj?.isAmbientLight) {
-          obj.color?.set?.('#9aa5bb');
-          obj.intensity = 0.14;
+          obj.color?.set?.('#8aa9cf');
+          obj.intensity = 0.2;
         }
         if (obj?.isDirectionalLight) {
-          obj.color?.set?.('#e4c594');
-          obj.intensity = 0.66;
-          if (obj?.position?.set) obj.position.set(2.4, 1.45, -2.6);
+          obj.color?.set?.('#79e6f8');
+          obj.intensity = 0.78;
+          if (obj?.position?.set) obj.position.set(2.45, 1.5, -2.55);
         }
       });
     }
 
     if (window.THREE && !scene.userData.cwnRimLight) {
-      const rim = new THREE.DirectionalLight('#d9b782', 0.26);
-      rim.position.set(2.85, 0.95, -2.15);
+      const rim = new THREE.DirectionalLight('#f59e0b', 0.22);
+      rim.position.set(2.9, 1.0, -2.1);
       scene.add(rim);
       scene.userData.cwnRimLight = rim;
     } else if (scene.userData.cwnRimLight) {
-      scene.userData.cwnRimLight.color?.set?.('#d9b782');
-      scene.userData.cwnRimLight.intensity = 0.26;
-      scene.userData.cwnRimLight.position?.set?.(2.85, 0.95, -2.15);
+      scene.userData.cwnRimLight.color?.set?.('#f59e0b');
+      scene.userData.cwnRimLight.intensity = 0.22;
+      scene.userData.cwnRimLight.position?.set?.(2.9, 1.0, -2.1);
     }
   }
 }
@@ -710,21 +711,21 @@ function updateSelectedCountry(iso) {
   refreshLabels(state.globeCenter);
 }
 
-function setPingVisual(lat, lng, color = '#ffd166', countryCenter = null) {
+function setPingVisual(lat, lng, color = '#f59e0b', countryCenter = null) {
   const ringPayload = [
     {
       lat,
       lng,
-      color: 'rgba(216, 175, 98, 0.18)',
-      maxRadius: 2.2,
-      speed: 0.55,
-      repeatPeriod: 1850
+      color: 'rgba(34, 211, 238, 0.22)',
+      maxRadius: 2.4,
+      speed: 0.58,
+      repeatPeriod: 1750
     }
   ];
 
   globe.pointsData([
-    { lat, lng, color: 'rgba(255, 214, 138, 0.16)', radius: 0.9, altitude: 0.028 },
-    { lat, lng, color, radius: 0.4, altitude: 0.042 }
+    { lat, lng, color: 'rgba(34, 211, 238, 0.18)', radius: 0.95, altitude: 0.03 },
+    { lat, lng, color, radius: 0.42, altitude: 0.044 }
   ]);
   globe.ringsData(isMobile ? ringPayload.slice(0, 1) : ringPayload);
 }
@@ -1067,7 +1068,7 @@ async function loadCountryFeed(code, name, center) {
   };
   setLocationBadge(name);
   updateSelectedCountry(code);
-  setPingVisual(center.lat, center.lng, '#ffd166', center);
+  setPingVisual(center.lat, center.lng, '#f59e0b', center);
   focusGlobe(center.lat, center.lng, 1.35);
   regionChip.textContent = `Region: ${name}`;
   setDetailChip(`Country focus · ${center.lat.toFixed(2)}, ${center.lng.toFixed(2)}`);
@@ -1104,7 +1105,7 @@ async function pingAt(lat, lng, labelHint = '', queryHint = '') {
 
   const nearest = findNearestCountry(lat, lng);
 
-  setPingVisual(lat, lng, '#ffd166', nearest ? { lat: nearest.lat, lng: nearest.lng } : null);
+  setPingVisual(lat, lng, '#f59e0b', nearest ? { lat: nearest.lat, lng: nearest.lng } : null);
   focusGlobe(lat, lng, 1.34);
   if (nearest?.iso) {
     updateSelectedCountry(nearest.iso);
