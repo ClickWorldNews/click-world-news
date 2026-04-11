@@ -43,26 +43,26 @@ const globe = Globe({
   rendererConfig: { antialias: true, alpha: true, powerPreference: 'high-performance' }
 })(els.mount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('/vendor/earth-balanced-v2.jpg?v=20260411y')
-  .bumpImageUrl('/vendor/earth-topology.png?v=20260411y')
+  .globeImageUrl('/vendor/earth-night-premium.jpg?v=20260411aa')
+  .bumpImageUrl('/vendor/earth-topology.png?v=20260411aa')
   .showAtmosphere(true)
-  .atmosphereColor('#b59dff')
-  .atmosphereAltitude(0.064)
-  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selected.code ? 0.045 : 0.0018))
+  .atmosphereColor('#7f93b3')
+  .atmosphereAltitude(0.053)
+  .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selected.code ? 0.042 : 0.0016))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selected.code
-      ? 'rgba(255, 134, 213, 0.20)'
-      : 'rgba(15, 14, 30, 0.06)'
+      ? 'rgba(201, 164, 106, 0.16)'
+      : 'rgba(10, 15, 22, 0.06)'
   )
   .polygonSideColor((f) =>
     f?.properties?.ISO_A2 === state.selected.code
-      ? 'rgba(155, 123, 255, 0.24)'
-      : 'rgba(10, 9, 22, 0.04)'
+      ? 'rgba(138, 108, 64, 0.20)'
+      : 'rgba(8, 12, 18, 0.04)'
   )
   .polygonStrokeColor((f) =>
     f?.properties?.ISO_A2 === state.selected.code
-      ? 'rgba(255, 226, 245, 0.94)'
-      : 'rgba(198, 175, 255, 0.12)'
+      ? 'rgba(233, 202, 151, 0.90)'
+      : 'rgba(170, 184, 208, 0.12)'
   )
   .labelsData([])
   .labelLat((d) => d.lat)
@@ -71,7 +71,7 @@ const globe = Globe({
   .labelSize((d) => d.size || 0.7)
   .labelDotRadius(() => 0.08)
   .labelAltitude(() => 0.028)
-  .labelColor((d) => d.color || 'rgba(248,240,255,0.95)')
+  .labelColor((d) => d.color || 'rgba(233, 240, 248, 0.96)')
   .pointsData([])
   .pointLat((d) => d.lat)
   .pointLng((d) => d.lng)
@@ -119,7 +119,7 @@ function styleScene() {
   const renderer = globe.renderer?.();
   if (renderer) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
+    renderer.toneMappingExposure = 1.06;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     const dpr = window.devicePixelRatio || 1;
     renderer.setPixelRatio?.(Math.min(dpr, 1.8));
@@ -127,11 +127,11 @@ function styleScene() {
 
   const mat = globe.globeMaterial?.();
   if (mat) {
-    mat.color?.set?.('#faf8ff');
-    mat.emissive?.set?.('#04040f');
-    mat.specular?.set?.('#dec9ff');
-    mat.shininess = 22;
-    mat.bumpScale = 0.32;
+    mat.color?.set?.('#f4f8ff');
+    mat.emissive?.set?.('#03070d');
+    mat.specular?.set?.('#d9c6a4');
+    mat.shininess = 20;
+    mat.bumpScale = 0.30;
     if (mat.map && renderer?.capabilities?.getMaxAnisotropy) {
       mat.map.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
       mat.map.needsUpdate = true;
@@ -142,28 +142,28 @@ function styleScene() {
   const scene = globe.scene();
   scene.traverse((obj) => {
     if (obj?.isAmbientLight) {
-      obj.color?.set?.('#c1b0ff');
-      obj.intensity = 0.14;
+      obj.color?.set?.('#9eb2cc');
+      obj.intensity = 0.12;
     }
     if (obj?.isDirectionalLight) {
-      obj.color?.set?.('#e2ecff');
-      obj.intensity = 0.9;
+      obj.color?.set?.('#dce9fa');
+      obj.intensity = 0.88;
       obj.position?.set?.(2.8, 2.0, -2.45);
     }
   });
 
-  if (!scene.userData.magentaRim) {
-    const rim = new THREE.DirectionalLight('#ff80ce', 0.30);
-    rim.position.set(-3.05, 1.1, 2.55);
-    scene.add(rim);
-    scene.userData.magentaRim = rim;
+  if (!scene.userData.warmRim) {
+    const warm = new THREE.DirectionalLight('#d2b483', 0.24);
+    warm.position.set(-2.9, 1.0, 2.4);
+    scene.add(warm);
+    scene.userData.warmRim = warm;
   }
 
-  if (!scene.userData.cyanRim) {
-    const rim2 = new THREE.DirectionalLight('#72dcff', 0.24);
-    rim2.position.set(2.55, -0.35, 2.25);
-    scene.add(rim2);
-    scene.userData.cyanRim = rim2;
+  if (!scene.userData.coolRim) {
+    const cool = new THREE.DirectionalLight('#8aa7cf', 0.18);
+    cool.position.set(2.4, -0.3, 2.15);
+    scene.add(cool);
+    scene.userData.coolRim = cool;
   }
 }
 
@@ -244,14 +244,14 @@ function refreshLabels() {
     .map((c) => ({ ...c, d: angularDistance(lat, lng, c.lat, c.lng) }))
     .sort((a, b) => a.d - b.d)
     .slice(0, count)
-    .map(({ d, ...c }) => ({ label: c.label, lat: c.lat, lng: c.lng, color: 'rgba(248,240,255,0.94)', size: 0.68 }));
+    .map(({ d, ...c }) => ({ label: c.label, lat: c.lat, lng: c.lng, color: 'rgba(230, 238, 248, 0.94)', size: 0.68 }));
 
   if (state.selected.type !== 'world') {
     picks.push({
       label: state.selected.name,
       lat: state.selected.lat,
       lng: state.selected.lng,
-      color: 'rgba(255,216,240,0.98)',
+      color: 'rgba(244, 223, 190, 0.98)',
       size: 0.82
     });
   }
@@ -261,13 +261,13 @@ function refreshLabels() {
 
 function setPing(lat, lng) {
   globe.pointsData([
-    { lat, lng, color: 'rgba(255,110,199,0.26)', radius: 0.9, altitude: 0.028 },
-    { lat, lng, color: 'rgba(115,220,255,0.95)', radius: 0.35, altitude: 0.05 }
+    { lat, lng, color: 'rgba(201,164,106,0.22)', radius: 0.9, altitude: 0.028 },
+    { lat, lng, color: 'rgba(236,214,176,0.96)', radius: 0.35, altitude: 0.05 }
   ]);
 
   globe.ringsData([
-    { lat, lng, color: 'rgba(255,110,199,0.52)', max: 2.8, speed: 0.9, period: 1400 },
-    { lat, lng, color: 'rgba(115,220,255,0.42)', max: 3.6, speed: 0.7, period: 1700 }
+    { lat, lng, color: 'rgba(201,164,106,0.46)', max: 2.8, speed: 0.9, period: 1400 },
+    { lat, lng, color: 'rgba(138,167,207,0.35)', max: 3.6, speed: 0.7, period: 1700 }
   ]);
 }
 

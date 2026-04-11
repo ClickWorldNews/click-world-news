@@ -1,14 +1,14 @@
 :root {
-  --bg-a: #080713;
-  --bg-b: #14112a;
-  --bg-c: #1f1438;
-  --glass: rgba(18, 14, 36, 0.64);
-  --line: rgba(212, 191, 255, 0.24);
-  --text: #f4eeff;
-  --muted: #beaee7;
-  --accent: #9b7bff;
-  --accent-2: #ff6ec7;
-  --accent-3: #63d8ff;
+  --bg-a: #06080d;
+  --bg-b: #0b1118;
+  --bg-c: #121a24;
+  --glass: rgba(12, 17, 24, 0.72);
+  --line: rgba(204, 178, 126, 0.26);
+  --text: #edf2f7;
+  --muted: #a9b6c7;
+  --accent: #c9a46a;
+  --accent-strong: #dfba85;
+  --accent-cool: #89a8d3;
 }
 
 * { box-sizing: border-box; }
@@ -21,19 +21,19 @@ html, body {
   color: var(--text);
   font-family: Inter, system-ui, sans-serif;
   background:
-    radial-gradient(58% 40% at 18% 0%, rgba(99, 216, 255, 0.16), transparent 60%),
-    radial-gradient(46% 34% at 84% 10%, rgba(255, 110, 199, 0.18), transparent 62%),
-    linear-gradient(165deg, var(--bg-a) 0%, var(--bg-b) 54%, var(--bg-c) 100%);
+    radial-gradient(54% 36% at 18% -8%, rgba(137, 168, 211, 0.14), transparent 65%),
+    radial-gradient(42% 28% at 84% 8%, rgba(201, 164, 106, 0.10), transparent 66%),
+    linear-gradient(165deg, var(--bg-a) 0%, var(--bg-b) 52%, var(--bg-c) 100%);
 }
 
 #app { position: fixed; inset: 0; }
 #globe { position: absolute; inset: 0; }
 
 .glass {
-  backdrop-filter: blur(14px) saturate(130%);
-  background: linear-gradient(180deg, rgba(31, 22, 58, 0.58), var(--glass));
+  backdrop-filter: blur(12px) saturate(112%);
+  background: linear-gradient(180deg, rgba(17, 25, 36, 0.76), var(--glass));
   border: 1px solid var(--line);
-  box-shadow: 0 14px 40px rgba(4, 2, 10, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .topbar {
@@ -60,15 +60,15 @@ html, body {
   width: 14px;
   height: 14px;
   border-radius: 999px;
-  background: radial-gradient(circle at 28% 25%, #fff, #d7c6ff 20%, var(--accent) 55%, #5a3bd1 100%);
-  box-shadow: 0 0 18px rgba(155, 123, 255, 0.9);
+  background: radial-gradient(circle at 35% 30%, #fff6e7, #dcbf90 42%, #8a6a37 100%);
+  box-shadow: 0 0 16px rgba(201, 164, 106, 0.6);
 }
 
 .topbar h1 {
   margin: 0;
   font-family: "Space Grotesk", Inter, sans-serif;
   font-size: 0.96rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -83,9 +83,9 @@ html, body {
   height: 42px;
   border-radius: 12px;
   border: 1px solid var(--line);
-  background: rgba(24, 18, 45, 0.8);
+  background: rgba(16, 22, 30, 0.92);
   color: var(--text);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 .hud {
@@ -113,13 +113,13 @@ html, body {
   transform: translateX(-50%);
   bottom: calc(92px + env(safe-area-inset-bottom));
   z-index: 11;
-  width: 88px;
+  width: 92px;
   height: 42px;
   border-radius: 999px;
-  color: #fef7ff;
-  border: 1px solid rgba(255, 110, 199, 0.48);
-  background:
-    radial-gradient(120% 120% at 50% 0%, rgba(255, 110, 199, 0.34), rgba(110, 77, 244, 0.34));
+  color: #f6efe4;
+  border: 1px solid rgba(201, 164, 106, 0.55);
+  background: linear-gradient(180deg, rgba(72, 54, 30, 0.9), rgba(36, 28, 18, 0.92));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 235, 202, 0.14);
   font-weight: 700;
 }
 
@@ -139,16 +139,17 @@ html, body {
 
 .dock-btn {
   border-radius: 12px;
-  border: 1px solid rgba(212, 191, 255, 0.24);
-  background: rgba(24, 18, 45, 0.74);
+  border: 1px solid rgba(204, 178, 126, 0.24);
+  background: rgba(16, 22, 30, 0.88);
   color: var(--text);
   font-size: 0.8rem;
   font-weight: 600;
 }
 
 .dock-btn.primary {
-  border-color: rgba(255, 110, 199, 0.56);
-  background: linear-gradient(180deg, rgba(143, 89, 255, 0.46), rgba(84, 55, 177, 0.54));
+  border-color: rgba(201, 164, 106, 0.7);
+  background: linear-gradient(180deg, rgba(80, 58, 33, 0.92), rgba(40, 30, 18, 0.94));
+  color: #f6efe4;
 }
 
 .sheet {
@@ -157,7 +158,7 @@ html, body {
   right: 0;
   bottom: 0;
   max-height: 68vh;
-  background: linear-gradient(180deg, rgba(17, 13, 33, 0.97), rgba(9, 7, 20, 0.98));
+  background: linear-gradient(180deg, rgba(10, 14, 20, 0.97), rgba(6, 9, 13, 0.99));
   border-top: 1px solid var(--line);
   border-radius: 18px 18px 0 0;
   z-index: 20;
@@ -166,11 +167,12 @@ html, body {
 }
 
 .sheet.hidden, .modal.hidden { display: none; }
+
 .sheet-bar {
   width: 46px;
   height: 4px;
   border-radius: 999px;
-  background: rgba(190, 174, 231, 0.65);
+  background: rgba(169, 182, 199, 0.62);
   margin: 0 auto 10px;
 }
 
@@ -183,10 +185,11 @@ html, body {
 
 .sheet-head h2 { margin: 0; font-size: 1rem; }
 .sheet-actions { display: flex; gap: 6px; }
+
 .sheet-btn {
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgba(36, 28, 65, 0.8);
+  background: rgba(20, 28, 39, 0.9);
   color: var(--text);
   padding: 7px 10px;
   font-size: 0.78rem;
@@ -207,14 +210,14 @@ html, body {
 }
 
 .feed-list li {
-  border: 1px solid rgba(212, 191, 255, 0.16);
+  border: 1px solid rgba(204, 178, 126, 0.16);
   border-radius: 12px;
   padding: 10px;
-  background: rgba(29, 22, 52, 0.62);
+  background: rgba(16, 23, 33, 0.72);
 }
 
 .feed-list a {
-  color: #f7f2ff;
+  color: #f0f4fa;
   text-decoration: none;
   font-weight: 600;
   line-height: 1.35;
@@ -230,7 +233,7 @@ html, body {
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: rgba(8, 6, 16, 0.72);
+  background: rgba(5, 8, 12, 0.76);
   backdrop-filter: blur(6px);
   display: grid;
   place-items: center;
@@ -241,7 +244,7 @@ html, body {
   width: min(520px, 96vw);
   border-radius: 16px;
   border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(24, 18, 45, 0.96), rgba(12, 9, 27, 0.98));
+  background: linear-gradient(180deg, rgba(14, 20, 28, 0.97), rgba(8, 12, 17, 0.99));
   padding: 12px;
 }
 
@@ -264,7 +267,7 @@ html, body {
 .search-row input {
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgba(12, 9, 27, 0.86);
+  background: rgba(9, 13, 19, 0.92);
   color: var(--text);
   padding: 10px;
 }
@@ -279,8 +282,8 @@ html, body {
   width: 100%;
   text-align: left;
   border-radius: 10px;
-  border: 1px solid rgba(212, 191, 255, 0.2);
-  background: rgba(32, 24, 56, 0.7);
+  border: 1px solid rgba(204, 178, 126, 0.2);
+  background: rgba(17, 24, 34, 0.82);
   color: var(--text);
   padding: 9px;
 }
