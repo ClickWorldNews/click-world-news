@@ -91,8 +91,8 @@ const globe = Globe({
   .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
   .showAtmosphere(true)
-  .atmosphereColor('#334455')
-  .atmosphereAltitude(0.12)
+  .atmosphereColor('#9aa8ba')
+  .atmosphereAltitude(0.045)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
@@ -179,20 +179,20 @@ function enforceGlobeVisualTheme() {
 
   globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
   globe.globeMaterial(new THREE.MeshPhongMaterial({
-    color: '#0a1f35',
-    emissive: '#0a1f35',
-    specular: '#334455',
-    shininess: 6
+    color: '#1a222d',
+    emissive: '#020305',
+    specular: '#3a4656',
+    shininess: 5
   }));
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: '#334455',
-      opacity: 0.18,
+      color: '#9aa8ba',
+      opacity: 0.06,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.12);
+    globe.atmosphereAltitude(0.045);
   }
 }
 
