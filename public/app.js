@@ -88,17 +88,17 @@ const globe = Globe({
   .backgroundColor('rgba(0,0,0,0)')
   .globeImageUrl('/vendor/earth-night.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
-  .showAtmosphere(true)
-  .atmosphereColor('#2a3442')
-  .atmosphereAltitude(isMobile ? 0.012 : 0.018)
+  .showAtmosphere(!isMobile)
+  .atmosphereColor('#161d28')
+  .atmosphereAltitude(isMobile ? 0 : 0.01)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.01))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(192, 208, 223, 0.38)'
-      : 'rgba(126, 139, 150, 0.09)'
+      ? 'rgba(182, 197, 212, 0.34)'
+      : 'rgba(118, 130, 144, 0.08)'
   )
-  .polygonSideColor(() => 'rgba(84, 94, 107, 0.08)')
-  .polygonStrokeColor(() => 'rgba(162, 176, 194, 0.2)')
+  .polygonSideColor(() => 'rgba(76, 86, 98, 0.08)')
+  .polygonStrokeColor(() => 'rgba(150, 166, 186, 0.18)')
   .polygonsTransitionDuration(0)
   .labelsData([])
   .labelLat((d) => d.lat)
@@ -160,11 +160,11 @@ if (typeof globe.polygonCapCurvatureResolution === 'function') {
 if (typeof globe.globeMaterial === 'function' && window.THREE) {
   const material = globe.globeMaterial();
   if (material) {
-    material.color = new THREE.Color('#d8dde2');
-    material.emissive = new THREE.Color('#02050b');
-    material.emissiveIntensity = isMobile ? 0.05 : 0.04;
-    material.shininess = isMobile ? 4 : 5;
-    material.specular = new THREE.Color('#111b2b');
+    material.color = new THREE.Color('#b7bec8');
+    material.emissive = new THREE.Color('#000000');
+    material.emissiveIntensity = isMobile ? 0.016 : 0.012;
+    material.shininess = isMobile ? 2 : 3;
+    material.specular = new THREE.Color('#0a1018');
   }
 }
 
@@ -426,7 +426,7 @@ function setPingVisual(lat, lng, color = '#ffd166', countryCenter = null) {
   }
 
   globe.pointsData([
-    { lat, lng, color: 'rgba(122, 182, 255, 0.17)', radius: 0.9, altitude: 0.028 },
+    { lat, lng, color: 'rgba(255, 214, 138, 0.16)', radius: 0.9, altitude: 0.028 },
     { lat, lng, color, radius: 0.4, altitude: 0.042 }
   ]);
   globe.ringsData(isMobile ? ringPayload.slice(0, 1) : ringPayload);
