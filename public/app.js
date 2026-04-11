@@ -563,8 +563,10 @@ function persistSelectedLocation() {
 
 function loadSelectedLocation() {
   const params = new URLSearchParams(window.location.search);
-  const qLat = Number(params.get('lat'));
-  const qLng = Number(params.get('lng'));
+  const latParam = params.get('lat');
+  const lngParam = params.get('lng');
+  const qLat = latParam == null ? Number.NaN : Number(latParam);
+  const qLng = lngParam == null ? Number.NaN : Number(lngParam);
   const qLoc = params.get('loc');
 
   if (Number.isFinite(qLat) && Number.isFinite(qLng)) {
@@ -1031,8 +1033,10 @@ async function init() {
   }
 
   const params = new URLSearchParams(window.location.search);
-  const qLat = Number(params.get('lat'));
-  const qLng = Number(params.get('lng'));
+  const latParam = params.get('lat');
+  const lngParam = params.get('lng');
+  const qLat = latParam == null ? Number.NaN : Number(latParam);
+  const qLng = lngParam == null ? Number.NaN : Number(lngParam);
   if (Number.isFinite(qLat) && Number.isFinite(qLng)) {
     await pingAt(qLat, qLng, state.selectedLocation?.name || '', '');
   }
