@@ -127,7 +127,7 @@ const globe = Globe({
   .pointAltitude((d) => d.altitude ?? 0.035)
   .pointRadius((d) => d.radius ?? 0.45)
   .pointColor((d) => d.color)
-  .pointResolution(isMobile ? 10 : 18)
+  .pointResolution(isMobile ? 8 : 16)
   .ringsData([])
   .ringLat((d) => d.lat)
   .ringLng((d) => d.lng)
@@ -156,7 +156,7 @@ const htmlLabelsSupported = false;
 const controls = globe.controls();
 globe.pointOfView({ lat: 20, lng: 0, altitude: 2.05 }, 0);
 controls.autoRotate = true;
-controls.autoRotateSpeed = isMobile ? 0.16 : 0.22;
+controls.autoRotateSpeed = isMobile ? 0.22 : 0.28;
 controls.enablePan = false;
 controls.minDistance = 125;
 controls.maxDistance = 300;
@@ -173,11 +173,11 @@ function enforceGlobeVisualTheme() {
   if (typeof globe.globeMaterial === 'function' && window.THREE) {
     const material = globe.globeMaterial();
     if (material) {
-      material.color = new THREE.Color('#c7d0dc');
+      material.color = new THREE.Color('#e2e9f2');
       material.emissive = new THREE.Color('#000000');
-      material.emissiveIntensity = 0.02;
-      material.shininess = 1.8;
-      material.specular = new THREE.Color('#070c15');
+      material.emissiveIntensity = 0.03;
+      material.shininess = 2.4;
+      material.specular = new THREE.Color('#0b111b');
       material.needsUpdate = true;
     }
   }
@@ -187,11 +187,11 @@ function enforceGlobeVisualTheme() {
     if (scene?.traverse) {
       scene.traverse((obj) => {
         if (obj?.isAmbientLight) {
-          obj.intensity = 0.5;
+          obj.intensity = 0.64;
           obj.color = new THREE.Color('#d5dbe3');
         }
         if (obj?.isDirectionalLight) {
-          obj.intensity = 0.62;
+          obj.intensity = 0.78;
           obj.color = new THREE.Color('#ffffff');
         }
       });
@@ -375,45 +375,16 @@ function buildLabelPoints(anchor = state.globeCenter) {
     if (!uniq.has(key)) uniq.set(key, c);
   }
 
-  const densityMap = new Map();
-  for (const c of uniq.values()) {
-    let nearby = 0;
-    for (const x of uniq.values()) {
-      if (c === x) continue;
-      if (angularDistance(c.lat, c.lng, x.lat, x.lng) < 0.15) nearby += 1;
-    }
-    densityMap.set(c, nearby);
-  }
-
   const picked = [];
-  const lngDelta = (a, b) => Math.abs((((a - b) + 540) % 360) - 180);
+  const spacing = isMobile ? 0.23 : 0.17;
 
-  const collides = (a, b) => {
-    const densityA = densityMap.get(a) || 0;
-    const densityB = densityMap.get(b) || 0;
-    const crowdFactor = Math.min(1.5, 1 + (densityA + densityB) * 0.06);
-    const latGap = Math.abs(a.lat - b.lat);
-    const cosLat = Math.max(0.25, Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180));
-    const lngGap = lngDelta(a.lng, b.lng) * cosLat;
-    const minGap = (isMobile ? 11 : 8.4) * crowdFactor;
-    return latGap < minGap && lngGap < minGap;
-  };
-
-  for (const c of [...uniq.values()].sort((a, b) => {
-    const pa = b.priority || 1;
-    const pb = a.priority || 1;
-    if (pa !== pb) return pa - pb;
-    return (densityMap.get(a) || 0) - (densityMap.get(b) || 0);
-  })) {
-    const tooClose = picked.some((p) => collides(c, p));
+  for (const c of [...uniq.values()].sort((a, b) => (b.priority || 1) - (a.priority || 1))) {
+    const tooClose = picked.some((p) => angularDistance(c.lat, c.lng, p.lat, p.lng) < spacing);
     if (!tooClose) {
-      const density = densityMap.get(c) || 0;
-      const base = isMobile ? 0.72 : 0.86;
-      const priorityBoost = (c.priority || 1) >= 5 ? 0.06 : 0;
-      c.labelScale = Math.max(0.52, base - Math.min(0.24, density * 0.025) + priorityBoost);
+      c.labelScale = isMobile ? 0.72 : 0.86;
       picked.push(c);
     }
-    if (picked.length >= (isMobile ? 18 : 34)) break;
+    if (picked.length >= (isMobile ? 16 : 28)) break;
   }
 
   labelPoints = picked;
@@ -464,7 +435,7 @@ function setPingVisual(lat, lng, color = '#ffd166', countryCenter = null) {
     { lat, lng, color: 'rgba(255, 214, 138, 0.16)', radius: 0.9, altitude: 0.028 },
     { lat, lng, color, radius: 0.4, altitude: 0.042 }
   ]);
-  globe.ringsData(isMobile ? ringPayload.slice(0, 1) : ringPayload);
+  globe.ringsData(isMobile ? [] : ringPayload);
 }
 
 function resizeGlobe() {
@@ -492,7 +463,7 @@ function updateCenterUI() {
   const c = getCurrentCenter();
   state.globeCenter = { lat: c.lat, lng: c.lng };
 
-  if (state.labelsVisible && Date.now() - state.lastLabelRefresh > 2200) {
+  if (state.labelsVisible && Date.now() - state.lastLabelRefresh > 4200) {
     state.lastLabelRefresh = Date.now();
     refreshLabels(c);
   }
@@ -1105,7 +1076,7 @@ async function init() {
   }
 
   clearInterval(centerTimer);
-  centerTimer = setInterval(updateCenterUI, 800);
+  centerTimer = setInterval(updateCenterUI, 1400);
   updateCenterUI();
 
   if (state.selectedLocation?.type !== 'world') {
