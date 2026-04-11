@@ -63,7 +63,7 @@ const ART = {
   textSub: '#BFC5D3'
 };
 
-const GLOBE_TEXTURE_URL = '/vendor/earth-balanced-v2.jpg';
+const GLOBE_TEXTURE_URL = '/vendor/earth-reference-final.jpg';
 const GLOBE_BUMP_URL = '/vendor/earth-topology.png';
 const USE_ADMIN_BOUNDARIES = false;
 
@@ -149,18 +149,18 @@ const globe = Globe({
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.056 : 0.004))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(226, 192, 138, 0.28)'
-      : 'rgba(54, 66, 88, 0.64)'
+      ? 'rgba(224, 191, 136, 0.22)'
+      : 'rgba(44, 54, 72, 0.56)'
   )
   .polygonSideColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(154, 122, 74, 0.26)'
-      : 'rgba(19, 27, 40, 0.34)'
+      ? 'rgba(146, 114, 70, 0.2)'
+      : 'rgba(16, 22, 33, 0.3)'
   )
   .polygonStrokeColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
-      ? 'rgba(242, 216, 174, 0.92)'
-      : 'rgba(201, 164, 106, 0.46)'
+      ? 'rgba(242, 216, 174, 0.84)'
+      : 'rgba(201, 164, 106, 0.33)'
   )
   .polygonsTransitionDuration(0)
   .labelsData([])
@@ -257,11 +257,11 @@ function enforceGlobeVisualTheme() {
   globe.globeImageUrl(GLOBE_TEXTURE_URL);
   const globeMat = globe.globeMaterial?.();
   if (globeMat) {
-    globeMat.color?.set?.('#536276');
-    globeMat.emissive?.set?.('#090f1b');
-    globeMat.specular?.set?.('#e9c78f');
-    globeMat.shininess = 30;
-    globeMat.bumpScale = 0.15;
+    globeMat.color?.set?.('#48576a');
+    globeMat.emissive?.set?.('#080d17');
+    globeMat.specular?.set?.('#d8b987');
+    globeMat.shininess = 22;
+    globeMat.bumpScale = 0.12;
     globeMat.needsUpdate = true;
   }
 
@@ -269,17 +269,17 @@ function enforceGlobeVisualTheme() {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
       color: ART.rimHalo,
-      opacity: 0.2,
+      opacity: 0.14,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.078);
+    globe.atmosphereAltitude(0.064);
   }
 
   if (typeof globe.renderer === 'function') {
     const renderer = globe.renderer();
     if (renderer) {
       renderer.toneMapping = window.THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = isMobile ? 1.06 : 1.12;
+      renderer.toneMappingExposure = isMobile ? 0.92 : 0.98;
       renderer.outputColorSpace = window.THREE.SRGBColorSpace;
 
       const mat = globe.globeMaterial?.();
@@ -296,26 +296,26 @@ function enforceGlobeVisualTheme() {
     if (scene?.traverse) {
       scene.traverse((obj) => {
         if (obj?.isAmbientLight) {
-          obj.color?.set?.(ART.textSub);
-          obj.intensity = 0.19;
+          obj.color?.set?.('#9aa5bb');
+          obj.intensity = 0.14;
         }
         if (obj?.isDirectionalLight) {
-          obj.color?.set?.(ART.rimCore);
-          obj.intensity = 0.82;
-          if (obj?.position?.set) obj.position.set(2.55, 1.55, -2.7);
+          obj.color?.set?.('#e4c594');
+          obj.intensity = 0.66;
+          if (obj?.position?.set) obj.position.set(2.4, 1.45, -2.6);
         }
       });
     }
 
     if (window.THREE && !scene.userData.cwnRimLight) {
-      const rim = new THREE.DirectionalLight(ART.rimHalo, 0.39);
-      rim.position.set(3.05, 1.05, -2.35);
+      const rim = new THREE.DirectionalLight('#d9b782', 0.26);
+      rim.position.set(2.85, 0.95, -2.15);
       scene.add(rim);
       scene.userData.cwnRimLight = rim;
     } else if (scene.userData.cwnRimLight) {
-      scene.userData.cwnRimLight.color?.set?.(ART.rimHalo);
-      scene.userData.cwnRimLight.intensity = 0.39;
-      scene.userData.cwnRimLight.position?.set?.(3.05, 1.05, -2.35);
+      scene.userData.cwnRimLight.color?.set?.('#d9b782');
+      scene.userData.cwnRimLight.intensity = 0.26;
+      scene.userData.cwnRimLight.position?.set?.(2.85, 0.95, -2.15);
     }
   }
 }
@@ -1010,6 +1010,24 @@ async function loadSignalFeed() {
     if (req !== activeRequest) return;
 
     state.feed = data.stories || [];
+    if ((state.feed || []).length < 6) {
+      try {
+        const ultra = await fetchJSON('/api/ultra-signal', 9000, { exclusive: true });
+        const merged = (ultra?.sections || []).flatMap((s) => s?.stories || []);
+        if (merged.length) {
+          const seen = new Set();
+          state.feed = merged.filter((story) => {
+            const key = `${String(story?.title || '').toLowerCase()}|${String(story?.link || '').toLowerCase()}`;
+            if (!story?.title || !story?.link || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          }).slice(0, 30);
+        }
+      } catch {
+        // Keep base signal if ultra feed fails.
+      }
+    }
+
     state.lastFetchTimestamp = Date.now();
     saveFeedCache(state.feed);
     renderFeed(state.feed);
@@ -1131,6 +1149,21 @@ async function pingAt(lat, lng, labelHint = '', queryHint = '') {
     savePing(finalName, lat, lng);
 
     state.feed = data.stories || [];
+    if ((state.feed || []).length < 4 && data?.code) {
+      try {
+        const fallback = await fetchJSON(
+          `/api/news?country=${encodeURIComponent(data.code)}&name=${encodeURIComponent(data?.geo?.country || finalName)}`,
+          9000,
+          { exclusive: true }
+        );
+        if ((fallback?.stories || []).length > (state.feed || []).length) {
+          state.feed = fallback.stories;
+        }
+      } catch {
+        // Keep nearby results when country fallback fails.
+      }
+    }
+
     saveFeedCache(state.feed);
     renderFeed(state.feed);
     openFeedSheet(`Click News · ${finalName}`);
@@ -1247,6 +1280,15 @@ function bindEvents() {
     const nearest = findNearestCountry(center.lat, center.lng);
 
     if (state.selectedLocation?.type !== 'world' && state.feedScope === 'local') {
+      if ((state.feed || []).length < 3 && state.selectedLocation?.latlng) {
+        await pingAt(
+          Number(state.selectedLocation.latlng.lat),
+          Number(state.selectedLocation.latlng.lng),
+          state.selectedLocation.name || '',
+          state.selectedLocation.name || ''
+        );
+        return;
+      }
       openFeedSheet(`Click News · ${state.selectedLocation.name}`);
       renderFeed(state.feed);
       return;
