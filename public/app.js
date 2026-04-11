@@ -88,11 +88,11 @@ const globe = Globe({
   }
 })(globeMount)
   .backgroundColor('rgba(0,0,0,0)')
-  .globeImageUrl('/vendor/earth-balanced-v2.jpg')
+  .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
   .bumpImageUrl('/vendor/earth-topology.png')
   .showAtmosphere(true)
-  .atmosphereColor('#c7ced8')
-  .atmosphereAltitude(0.028)
+  .atmosphereColor('#334455')
+  .atmosphereAltitude(0.07)
   .polygonAltitude((f) => (f?.properties?.ISO_A2 === state.selectedLocation.code ? 0.072 : 0.002))
   .polygonCapColor((f) =>
     f?.properties?.ISO_A2 === state.selectedLocation.code
@@ -158,7 +158,7 @@ const htmlLabelsSupported = false;
 const controls = globe.controls();
 globe.pointOfView({ lat: 20, lng: 0, altitude: 2.05 }, 0);
 controls.autoRotate = true;
-controls.autoRotateSpeed = isMobile ? 0.22 : 0.28;
+controls.autoRotateSpeed = isMobile ? 0.08 : 0.12;
 controls.enablePan = false;
 controls.minDistance = 125;
 controls.maxDistance = 300;
@@ -177,22 +177,22 @@ if (typeof globe.renderer === 'function') {
 function enforceGlobeVisualTheme() {
   if (!(window.THREE && typeof globe.globeMaterial === 'function')) return;
 
-  globe.globeImageUrl('/vendor/earth-balanced-v2.jpg');
+  globe.globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg');
   globe.globeMaterial(new THREE.MeshPhongMaterial({
-    color: '#202733',
-    emissive: '#030407',
-    specular: '#2f3742',
-    shininess: 4
+    color: '#0a1f35',
+    emissive: '#0a1f35',
+    specular: '#334455',
+    shininess: 6
   }));
 
   if (typeof globe.atmosphereMaterial === 'function') {
     globe.showAtmosphere(true);
     globe.atmosphereMaterial(new THREE.MeshPhongMaterial({
-      color: '#c7ced8',
-      opacity: 0.04,
+      color: '#334455',
+      opacity: 0.18,
       transparent: true
     }));
-    globe.atmosphereAltitude(0.028);
+    globe.atmosphereAltitude(0.07);
   }
 }
 
@@ -378,11 +378,24 @@ function buildLabelPoints(anchor = state.globeCenter) {
 
   const picked = [];
   const spacing = isMobile ? 0.27 : 0.2;
+  const ordered = [...uniq.values()].sort((a, b) => (b.priority || 1) - (a.priority || 1));
+  const densityByIso = new Map();
 
-  for (const c of [...uniq.values()].sort((a, b) => (b.priority || 1) - (a.priority || 1))) {
+  for (const c of ordered) {
+    let nearby = 0;
+    for (const x of ordered) {
+      if (c === x) continue;
+      if (angularDistance(c.lat, c.lng, x.lat, x.lng) < (isMobile ? 0.3 : 0.22)) nearby += 1;
+    }
+    densityByIso.set(c.iso, nearby);
+  }
+
+  for (const c of ordered) {
     const tooClose = picked.some((p) => angularDistance(c.lat, c.lng, p.lat, p.lng) < spacing);
     if (!tooClose) {
-      c.labelScale = isMobile ? 0.72 : 0.86;
+      const density = densityByIso.get(c.iso) || 0;
+      const base = isMobile ? 0.7 : 0.82;
+      c.labelScale = Math.max(0.52, base - Math.min(0.22, density * 0.02));
       picked.push(c);
     }
     if (picked.length >= (isMobile ? 16 : 28)) break;
@@ -414,10 +427,10 @@ function setPingVisual(lat, lng, color = '#ffd166', countryCenter = null) {
     {
       lat,
       lng,
-      color: 'rgba(216, 175, 98, 0.26)',
-      maxRadius: 2.8,
-      speed: 0.75,
-      repeatPeriod: 1500
+      color: 'rgba(216, 175, 98, 0.2)',
+      maxRadius: 2.6,
+      speed: 0.62,
+      repeatPeriod: 1850
     }
   ];
 
@@ -436,7 +449,7 @@ function setPingVisual(lat, lng, color = '#ffd166', countryCenter = null) {
     { lat, lng, color: 'rgba(255, 214, 138, 0.16)', radius: 0.9, altitude: 0.028 },
     { lat, lng, color, radius: 0.4, altitude: 0.042 }
   ]);
-  globe.ringsData(isMobile ? [] : ringPayload);
+  globe.ringsData(isMobile ? ringPayload.slice(0, 1) : ringPayload);
 }
 
 function resizeGlobe() {
@@ -523,7 +536,7 @@ function renderFeed(stories = []) {
   }
 }
 
-function openFeedSheet(title = 'Drudge · World') {
+function openFeedSheet(title = 'Click News · World') {
   feedTitle.textContent = title;
   feedSheet.classList.remove('hidden');
   feedSheet.setAttribute('aria-hidden', 'false');
@@ -703,7 +716,7 @@ async function loadSignalFeed() {
   lastFeedLoader = loadSignalFeed;
   state.feedScope = 'global';
   updateSharePingVisibility();
-  openFeedSheet('Drudge · World');
+  openFeedSheet('Click News · World');
   renderFeed(state.feed);
 
   try {
@@ -714,7 +727,7 @@ async function loadSignalFeed() {
     state.lastFetchTimestamp = Date.now();
     saveFeedCache(state.feed);
     renderFeed(state.feed);
-    openFeedSheet('Drudge · World');
+    openFeedSheet('Click News · World');
   } catch {
     if (req === activeRequest) {
       try {
@@ -723,11 +736,11 @@ async function loadSignalFeed() {
         state.feed = backup.stories || state.feed;
         saveFeedCache(state.feed);
         renderFeed(state.feed);
-        openFeedSheet('Drudge · World');
+        openFeedSheet('Click News · World');
       } catch {
         renderFeed(state.feed);
         showStatus('Feeds temporarily unavailable — showing last known headlines.');
-        openFeedSheet('Drudge · World');
+        openFeedSheet('Click News · World');
       }
     }
   } finally {
@@ -739,7 +752,7 @@ async function loadCountryFeed(code, name, center) {
   const req = ++activeRequest;
   setLoading(true);
   hideStatus();
-  openFeedSheet(`Drudge · ${name}`);
+  openFeedSheet(`Click News · ${name}`);
   renderFeed(state.feed);
 
   state.selectedLocation = {
@@ -767,12 +780,12 @@ async function loadCountryFeed(code, name, center) {
     state.feed = data.stories || [];
     saveFeedCache(state.feed);
     renderFeed(state.feed);
-    openFeedSheet(`Drudge · ${name}`);
+    openFeedSheet(`Click News · ${name}`);
   } catch {
     if (req === activeRequest) {
       renderFeed(state.feed);
       showStatus('Feeds temporarily unavailable — showing last known headlines.');
-      openFeedSheet(`Drudge · ${name}`);
+      openFeedSheet(`Click News · ${name}`);
     }
   } finally {
     if (req === activeRequest) setLoading(false);
@@ -795,7 +808,7 @@ async function pingAt(lat, lng, labelHint = '', queryHint = '') {
 
   state.feedScope = 'local';
   updateSharePingVisibility();
-  openFeedSheet(`Drudge · ${labelHint || nearest?.label || 'Nearby'}`);
+  openFeedSheet(`Click News · ${labelHint || nearest?.label || 'Nearby'}`);
   renderFeed(state.feed);
 
   lastFeedLoader = () => pingAt(lat, lng, labelHint, queryHint);
@@ -821,12 +834,12 @@ async function pingAt(lat, lng, labelHint = '', queryHint = '') {
     state.feed = data.stories || [];
     saveFeedCache(state.feed);
     renderFeed(state.feed);
-    openFeedSheet(`Drudge · ${finalName}`);
+    openFeedSheet(`Click News · ${finalName}`);
   } catch {
     if (req === activeRequest) {
       renderFeed(state.feed);
       showStatus('Feeds temporarily unavailable — showing last known headlines.');
-      openFeedSheet('Drudge · Nearby');
+      openFeedSheet('Click News · Nearby');
     }
   } finally {
     if (req === activeRequest) setLoading(false);
@@ -916,7 +929,25 @@ function bindEvents() {
     }
   });
 
-  openSignalBtn.addEventListener('click', loadSignalFeed);
+  openSignalBtn.addEventListener('click', async () => {
+    const pov = globe.pointOfView() || {};
+    const altitude = Number(pov.altitude) || 2;
+    const center = getCurrentCenter();
+    const nearest = findNearestCountry(center.lat, center.lng);
+
+    if (state.selectedLocation?.type !== 'world' && state.feedScope === 'local') {
+      openFeedSheet(`Click News · ${state.selectedLocation.name}`);
+      renderFeed(state.feed);
+      return;
+    }
+
+    if (altitude <= 1.5 && nearest?.iso && nearest?.label) {
+      await loadCountryFeed(nearest.iso, nearest.label, { lat: nearest.lat, lng: nearest.lng });
+      return;
+    }
+
+    await loadSignalFeed();
+  });
   closeFeedBtn.addEventListener('click', closeFeedSheet);
 
   sharePingBtn?.addEventListener('click', async () => {
@@ -1084,7 +1115,7 @@ async function init() {
   updateSharePingVisibility();
   lastFeedLoader = loadSignalFeed;
 
-  // Warm global feed so first Drudge open is instant.
+  // Warm global feed so first Click News open is instant.
   if (!state.feed.length) {
     fetchJSON('/api/signal', 7000)
       .then((data) => {
