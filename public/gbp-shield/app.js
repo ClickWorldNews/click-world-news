@@ -65,7 +65,7 @@ function renderAudit(audit) {
     <div class="score-box">
       <div class="score-pill">${escapeHtml(audit.score)}/100</div>
       <div>
-        <p><strong>Grade ${escapeHtml(audit.grade)}</strong> · Estimated call-lift opportunity: <strong>+${escapeHtml(audit.projectedCallLift)}%</strong></p>
+        <p><strong>Grade ${escapeHtml(audit.grade)}</strong> · Estimated lead-lift opportunity: <strong>+${escapeHtml(audit.projectedCallLift)}%</strong></p>
         <p class="muted">${escapeHtml(audit.summary)}</p>
       </div>
     </div>

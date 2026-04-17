@@ -283,20 +283,51 @@ async function appendJsonLine(filePath, payload) {
 }
 
 function buildPosts({ industry, city }) {
-  const niche = industry || 'local service';
+  const niche = industry || 'local business';
   const place = city || 'your area';
-  const templates = [
-    ['Need fast service today?', `Our ${niche} team is available across ${place} with same-day scheduling and clear pricing.`, 'Call now'],
-    ['Local and trusted', `If you need reliable ${niche} support in ${place}, we’re ready to help with fast response times.`, 'Book service'],
-    ['Weekend availability', `Serving ${place} this weekend for urgent ${niche} requests. Licensed, insured, and straightforward.`, 'Request help'],
-    ['Before/after quality', `Every ${niche} job in ${place} gets clear communication, photo proof, and clean completion.`, 'Get a quote'],
-    ['Transparent pricing', `No surprise invoices. We provide upfront estimates for ${niche} work in ${place}.`, 'Message us'],
-    ['Emergency support', `After-hours ${niche} help available across ${place}. We respond quickly and keep you updated.`, 'Contact now'],
-    ['Seasonal maintenance', `Prevent costly breakdowns in ${place} with scheduled ${niche} maintenance this month.`, 'Schedule visit'],
-    ['Customer-first process', `From first call to finished job, our ${niche} process is built for speed and clarity in ${place}.`, 'Learn more'],
-    ['New week, open slots', `Open appointments this week for ${niche} services in ${place}. Early booking gets priority windows.`, 'Reserve spot'],
-    ['Community-focused service', `Proudly helping homes and businesses in ${place} with dependable ${niche} support.`, 'Call today']
-  ];
+  const industryLower = niche.toLowerCase();
+
+  const isHospitality = /restaurant|cafe|coffee|bar|bistro|diner|bakery|food|grill|pizza|kitchen/.test(industryLower);
+  const isTradeService = /plumb|hvac|electric|roofer|contractor|pest|clean|locksmith|landscap|handyman|repair/.test(industryLower);
+
+  const templates = isHospitality
+    ? [
+        ['What’s new this week', `${niche} specials are now live in ${place}. Fresh menu updates and customer favorites are available now.`, 'View menu'],
+        ['Table-ready in minutes', `Planning dinner in ${place}? ${niche} seating and pickup windows are open this week.`, 'Reserve now'],
+        ['Weekend spotlight', `Serving ${place} this weekend with popular dishes and rotating chef selections.`, 'Book a table'],
+        ['Customer favorite picks', `Not sure what to order at ${niche}? We just updated our most-loved picks for ${place} guests.`, 'See favorites'],
+        ['Local and consistent', `${niche} is focused on quality, speed, and service for customers across ${place}.`, 'Order today'],
+        ['Behind the scenes quality', `Fresh prep, clean kitchen flow, and reliable service — that’s how ${niche} runs in ${place}.`, 'Learn more'],
+        ['Weeknight plans sorted', `If you’re in ${place}, make ${niche} your easy weeknight option for food and service you can trust.`, 'Get directions'],
+        ['Group and family friendly', `${niche} can support group tables and family orders across ${place}.`, 'Message us'],
+        ['New month, fresh offers', `Updated monthly offers are now available at ${niche} for ${place} customers.`, 'See offers'],
+        ['Community favorite', `Proud to serve ${place} with consistent quality and hospitality every week.`, 'Visit us']
+      ]
+    : isTradeService
+      ? [
+          ['Need fast service today?', `Our ${niche} team is available across ${place} with same-day scheduling and clear pricing.`, 'Call now'],
+          ['Local and trusted', `If you need reliable ${niche} support in ${place}, we’re ready to help with fast response times.`, 'Book service'],
+          ['Weekend availability', `Serving ${place} this weekend for priority ${niche} requests.`, 'Request help'],
+          ['Before/after quality', `Every ${niche} job in ${place} gets clear communication, photo proof, and clean completion.`, 'Get a quote'],
+          ['Transparent pricing', `No surprise invoices. We provide upfront estimates for ${niche} work in ${place}.`, 'Message us'],
+          ['Emergency support', `After-hours ${niche} help is available across ${place}. We respond quickly and keep you updated.`, 'Contact now'],
+          ['Seasonal maintenance', `Prevent costly breakdowns in ${place} with scheduled ${niche} maintenance this month.`, 'Schedule visit'],
+          ['Customer-first process', `From first call to finished job, our ${niche} process is built for speed and clarity in ${place}.`, 'Learn more'],
+          ['New week, open slots', `Open appointments this week for ${niche} services in ${place}. Early booking gets priority windows.`, 'Reserve spot'],
+          ['Community-focused service', `Proudly helping homes and businesses in ${place} with dependable ${niche} support.`, 'Call today']
+        ]
+      : [
+          ['Serving local customers better', `${niche} is helping customers across ${place} with consistent service and clear communication.`, 'Learn more'],
+          ['This week at a glance', `We’ve opened new slots this week for ${niche} requests in ${place}.`, 'Book now'],
+          ['Customer-focused updates', `Our latest ${niche} updates are designed to make your experience in ${place} faster and easier.`, 'See details'],
+          ['Trusted local support', `${niche} continues to support businesses and residents in ${place} with reliable delivery and service.`, 'Contact us'],
+          ['Quality and consistency', `We focus on quality outcomes and responsive support for every ${niche} request in ${place}.`, 'Get started'],
+          ['Monthly service highlights', `This month’s ${niche} priorities for ${place} customers are now available.`, 'View highlights'],
+          ['Flexible scheduling', `${niche} appointment windows are open across ${place} this week.`, 'Schedule now'],
+          ['Real local experience', `Local customers in ${place} choose ${niche} for practical, dependable service.`, 'See why'],
+          ['Updated offers available', `New offers for ${niche} services in ${place} are now live.`, 'See offers'],
+          ['Built for long-term trust', `${niche} is focused on long-term customer trust and service quality in ${place}.`, 'Message us']
+        ];
 
   return templates.map(([headline, body, cta]) => ({ headline, body, cta }));
 }
@@ -442,7 +473,7 @@ function generateGbpAudit(input = {}) {
     grade,
     projectedCallLift,
     summary:
-      `${businessName} is currently at ${score}/100 (${grade}). The fastest path to more inbound calls is fixing profile completeness and consistent posting/review operations.`,
+      `${businessName} is currently at ${score}/100 (${grade}). The fastest path to more inbound leads is fixing profile completeness and consistent posting/review operations.`,
     quickWins: [
       'Update top 8 service entries with city-specific phrasing.',
       'Reply to every unanswered review from the last 90 days.',
