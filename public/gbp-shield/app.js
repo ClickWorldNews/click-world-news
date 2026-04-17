@@ -30,38 +30,37 @@ function readFormData(form) {
 
 function renderAudit(audit) {
   const priorities = (audit.priorities || [])
+    .slice(0, 4)
     .map(
       (item) => `
         <li>
           <strong>${escapeHtml(item.title)}</strong><br />
-          <span>${escapeHtml(item.why)}</span><br />
-          <em>Action:</em> ${escapeHtml(item.action)}
-          <small>Impact: ${escapeHtml(item.impact)}</small>
+          <span>${escapeHtml(item.action)}</span>
         </li>`
     )
     .join('');
 
-  const quickWins = (audit.quickWins || []).map((x) => `<li>${escapeHtml(x)}</li>`).join('');
-  const weeklyPlan = (audit.weeklyPlan || []).map((x) => `<li>${escapeHtml(x)}</li>`).join('');
+  const quickWins = (audit.quickWins || []).slice(0, 4).map((x) => `<li>${escapeHtml(x)}</li>`).join('');
+  const weeklyPlan = (audit.weeklyPlan || []).slice(0, 3).map((x) => `<li>${escapeHtml(x)}</li>`).join('');
 
   const posts = (audit.generatedPosts || [])
-    .slice(0, 6)
+    .slice(0, 3)
     .map(
       (post) => `
       <li>
         <strong>${escapeHtml(post.headline)}</strong><br />
-        ${escapeHtml(post.body)}<br />
-        <small>CTA: ${escapeHtml(post.cta)}</small>
+        ${escapeHtml(post.body)}
       </li>`
     )
     .join('');
 
   const repliesPositive = (audit.reviewReplies?.positive || [])
+    .slice(0, 2)
     .map((x) => `<li>${escapeHtml(x)}</li>`)
     .join('');
 
   auditResult.innerHTML = `
-    <h3>${escapeHtml(audit.businessName)} — Free Audit Result</h3>
+    <h3>${escapeHtml(audit.businessName)} — Audit Summary</h3>
     <div class="score-box">
       <div class="score-pill">${escapeHtml(audit.score)}/100</div>
       <div>
@@ -72,31 +71,31 @@ function renderAudit(audit) {
 
     <div class="grid-3">
       <article class="card">
-        <h4>Top priorities</h4>
+        <h4>Top actions now</h4>
         <ul>${priorities || '<li>No major blockers detected.</li>'}</ul>
       </article>
       <article class="card">
-        <h4>48-hour quick wins</h4>
+        <h4>Quick wins (48 hours)</h4>
         <ul>${quickWins}</ul>
       </article>
       <article class="card">
-        <h4>30-day action plan</h4>
+        <h4>First 30 days</h4>
         <ul>${weeklyPlan}</ul>
       </article>
     </div>
 
     <div class="grid-3" style="margin-top:12px;">
       <article class="card">
-        <h4>Ready-to-post Google content</h4>
+        <h4>Post ideas</h4>
         <ul>${posts}</ul>
       </article>
       <article class="card">
-        <h4>Review reply templates (positive)</h4>
+        <h4>Review reply examples</h4>
         <ul>${repliesPositive}</ul>
       </article>
       <article class="card">
-        <h4>What to do next</h4>
-        <p class="muted">Launch these changes this week, then track profile views, leads, and review volume weekly. If you want us to run this weekly for you, use the Step 2 done-for-you form below.</p>
+        <h4>Want this done-for-you?</h4>
+        <p class="muted">Use the Step 2 form below to start weekly managed execution with the Founding Plan.</p>
       </article>
     </div>
   `;
