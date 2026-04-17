@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up — GBP Growth Ops</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav-wrap">
+        <a href="/gbp-shield/" class="brand">
+          <span class="logo-mark">◆</span>
+          <div>
+            <strong>GBP Growth Ops</strong>
+            <small>Signup + Onboarding</small>
+          </div>
+        </a>
+        <div class="nav-actions">
+          <a href="/gbp-shield/login.html" class="btn ghost">Client Login</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="page-hero">
+      <div class="container">
+        <h1>Start your 21-day free trial</h1>
+        <p>Create your account and onboarding details in one flow.</p>
+      </div>
+    </section>
+
+    <section class="page-content">
+      <div class="container page-grid">
+        <article class="page-card">
+          <h3>Account + business details</h3>
+          <form id="signup-form" class="stack">
+            <label>Name<input required name="name" /></label>
+            <label>Email<input required type="email" name="email" /></label>
+            <label>Business name<input required name="businessName" /></label>
+            <label>Website<input name="website" placeholder="https://..." /></label>
+            <label>Phone<input name="phone" /></label>
+            <label>Industry<input name="industry" placeholder="Plumbing, HVAC, Dental, etc." /></label>
+            <label>City<input name="city" /></label>
+            <label>State<input name="state" /></label>
+            <label>Plan
+              <select name="plan">
+                <option value="starter">Starter</option>
+                <option value="growth">Growth</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+            </label>
+            <label>Main competitors (comma separated)
+              <input name="competitors" placeholder="Competitor A, Competitor B" />
+            </label>
+            <label>Notes<textarea name="notes" rows="4" placeholder="Anything we should know before kickoff?"></textarea></label>
+            <button class="btn primary" type="submit">Create Account + Open Dashboard</button>
+          </form>
+          <p id="signup-status" class="muted"></p>
+        </article>
+
+        <article class="page-card">
+          <h3>What happens next</h3>
+          <ul>
+            <li>Immediate portal access with starter KPI baseline</li>
+            <li>Onboarding checklist sent to your email</li>
+            <li>Weekly execution starts after profile access is confirmed</li>
+            <li>First report typically delivered within 7 days</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container footer-row">
+        <p>© <span id="year"></span> GBP Growth Ops</p>
+        <nav>
+          <a href="/gbp-shield/about.html">About</a>
+          <a href="/gbp-shield/contact.html">Contact</a>
+          <a href="/gbp-shield/login.html">Login</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script src="./signup.js"></script>
+  </body>
+</html>

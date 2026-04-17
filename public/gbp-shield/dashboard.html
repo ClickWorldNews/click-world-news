@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Dashboard — GBP Growth Ops</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav-wrap">
+        <a href="/gbp-shield/" class="brand">
+          <span class="logo-mark">◆</span>
+          <div>
+            <strong>GBP Growth Ops</strong>
+            <small>Client Dashboard</small>
+          </div>
+        </a>
+        <div class="nav-actions">
+          <a href="/gbp-shield/" class="btn ghost">Back to Site</a>
+          <a href="/gbp-shield/contact.html" class="btn primary">Support</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="page-hero">
+      <div class="container">
+        <h1 id="welcome-title">Dashboard</h1>
+        <p id="welcome-sub">Your weekly KPI view, action queue, and competitor tracking.</p>
+      </div>
+    </section>
+
+    <section class="page-content">
+      <div class="container stack">
+        <div class="portal-kpis" id="kpi-grid">
+          <div><small>Profile Views (30d)</small><strong id="kpi-views">--</strong></div>
+          <div><small>Call Actions (30d)</small><strong id="kpi-calls">--</strong></div>
+          <div><small>Review Replies</small><strong id="kpi-replies">--</strong></div>
+          <div><small>Visibility Score</small><strong id="kpi-score">--</strong></div>
+        </div>
+
+        <div class="page-grid">
+          <article class="page-card">
+            <h3>Performance bars</h3>
+            <div class="bar-list">
+              <div class="bar-item">
+                <small>Profile completeness</small>
+                <div class="bar-track"><div class="bar-fill" id="bar-complete" style="width: 0%"></div></div>
+              </div>
+              <div class="bar-item">
+                <small>Posting cadence</small>
+                <div class="bar-track"><div class="bar-fill" id="bar-posts" style="width: 0%"></div></div>
+              </div>
+              <div class="bar-item">
+                <small>Review response coverage</small>
+                <div class="bar-track"><div class="bar-fill" id="bar-reviews" style="width: 0%"></div></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="page-card">
+            <h3>This week’s action queue</h3>
+            <ul id="task-list"></ul>
+          </article>
+
+          <article class="page-card">
+            <h3>Competitors</h3>
+            <form id="competitor-form" class="stack">
+              <label>Add competitor URL<input name="competitor" placeholder="https://competitor.com" /></label>
+              <button class="btn ghost" type="submit">Add Competitor</button>
+            </form>
+            <ul id="competitor-list"></ul>
+          </article>
+
+          <article class="page-card">
+            <h3>Plan + status</h3>
+            <p id="plan-label" class="muted">Plan: --</p>
+            <p id="onboard-label" class="muted"></p>
+            <a class="btn primary" href="/gbp-shield/contact.html">Request Strategy Call</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container footer-row">
+        <p>© <span id="year"></span> GBP Growth Ops</p>
+        <nav>
+          <a href="/gbp-shield/about.html">About</a>
+          <a href="/gbp-shield/contact.html">Contact</a>
+          <a href="/gbp-shield/login.html">Login</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script src="./dashboard.js"></script>
+  </body>
+</html>

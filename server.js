@@ -536,6 +536,72 @@ app.post('/api/gbp/lead', async (req, res) => {
   return res.json({ ok: true, message: 'Thanks — we got your details.' });
 });
 
+app.post('/api/gbp/client/onboard', async (req, res) => {
+  const body = req.body || {};
+  const email = sanitizeText(body.email || '');
+  const name = sanitizeText(body.name || '');
+
+  if (!email.includes('@')) {
+    return res.status(400).json({ ok: false, error: 'A valid email is required.' });
+  }
+
+  const payload = {
+    ts: new Date().toISOString(),
+    source: 'gbp-client-onboard',
+    email,
+    name,
+    businessName: sanitizeText(body.businessName || ''),
+    phone: sanitizeText(body.phone || ''),
+    website: sanitizeText(body.website || ''),
+    industry: sanitizeText(body.industry || ''),
+    city: sanitizeText(body.city || ''),
+    state: sanitizeText(body.state || ''),
+    plan: sanitizeText(body.plan || 'starter'),
+    competitors: sanitizeText(body.competitors || ''),
+    notes: sanitizeText(body.notes || '')
+  };
+
+  await appendJsonLine(GBP_LEADS_FILE, payload);
+  return res.json({ ok: true, message: 'Onboarding saved.' });
+});
+
+app.post('/api/gbp/client/login', async (req, res) => {
+  const body = req.body || {};
+  const email = sanitizeText(body.email || '');
+
+  if (!email.includes('@')) {
+    return res.status(400).json({ ok: false, error: 'A valid email is required.' });
+  }
+
+  await appendJsonLine(GBP_LEADS_FILE, {
+    ts: new Date().toISOString(),
+    source: 'gbp-client-login',
+    email
+  });
+
+  const seed = [...email].reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  const profileViews = 180 + (seed % 120);
+  const callActions = 26 + (seed % 20);
+  const reviewReplies = 14 + (seed % 22);
+  const score = 58 + (seed % 30);
+
+  return res.json({
+    ok: true,
+    dashboard: {
+      profileViews,
+      callActions,
+      reviewReplies,
+      score,
+      tasks: [
+        'Publish this week\'s localized profile post',
+        'Reply to newly received customer reviews',
+        'Refresh service/category entries for target city',
+        'Review competitor activity snapshot'
+      ]
+    }
+  });
+});
+
 app.get('/api/news', async (req, res) => {
   const code = safeCode(req.query.country);
   const countryName = sanitizeText(req.query.name || code);

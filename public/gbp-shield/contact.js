@@ -1,0 +1,29 @@
+const form = document.getElementById('contact-form');
+const statusNode = document.getElementById('contact-status');
+const yearNode = document.getElementById('year');
+
+if (yearNode) yearNode.textContent = String(new Date().getFullYear());
+
+form?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  statusNode.textContent = 'Sending...';
+
+  const payload = Object.fromEntries(new FormData(form).entries());
+  payload.source = 'gbp-contact-page';
+
+  try {
+    const res = await fetch('/api/gbp/lead', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || 'Could not submit');
+
+    statusNode.textContent = 'Thanks — we got your message and will reply shortly.';
+    form.reset();
+  } catch {
+    statusNode.textContent = 'Submission failed. Please try again in a minute.';
+  }
+});

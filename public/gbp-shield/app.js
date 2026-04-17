@@ -215,8 +215,12 @@ leadForm?.addEventListener('submit', async (event) => {
       throw new Error(data.error || 'Could not submit');
     }
 
-    leadStatus.textContent = 'Done — we got your details. We will send onboarding steps shortly.';
-    leadForm.reset();
+    leadStatus.textContent = 'Success — sending you to onboarding...';
+    const email = encodeURIComponent(payload.email || '');
+    const business = encodeURIComponent(payload.businessName || '');
+    setTimeout(() => {
+      window.location.href = `/gbp-shield/signup.html?email=${email}&business=${business}`;
+    }, 600);
   } catch {
     leadStatus.textContent = 'Submission failed. Please try again or email hello@gbpgrowthops.com';
   }

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact — GBP Growth Ops</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav-wrap">
+        <a href="/gbp-shield/" class="brand">
+          <span class="logo-mark">◆</span>
+          <div>
+            <strong>GBP Growth Ops</strong>
+            <small>Google Business Profile + Local SEO</small>
+          </div>
+        </a>
+        <div class="nav-actions">
+          <a href="/gbp-shield/" class="btn ghost">Home</a>
+          <a href="/gbp-shield/signup.html" class="btn primary">Start Trial</a>
+        </div>
+      </div>
+    </header>
+
+    <section class="page-hero">
+      <div class="container">
+        <h1>Contact us</h1>
+        <p>Need help with plans, onboarding, or enterprise setup? Send a message.</p>
+      </div>
+    </section>
+
+    <section class="page-content">
+      <div class="container page-grid">
+        <article class="page-card">
+          <h3>Get in touch</h3>
+          <form id="contact-form" class="stack">
+            <label>Name<input required name="name" /></label>
+            <label>Email<input required type="email" name="email" /></label>
+            <label>Business Name<input name="businessName" /></label>
+            <label>Website<input name="website" /></label>
+            <label>Message<textarea name="notes" rows="5" placeholder="Tell us what you need..."></textarea></label>
+            <button class="btn primary" type="submit">Send Message</button>
+          </form>
+          <p id="contact-status" class="muted"></p>
+        </article>
+
+        <article class="page-card">
+          <h3>Response windows</h3>
+          <ul>
+            <li>Starter Plan: within 48 hours</li>
+            <li>Growth Plan: within 24 hours</li>
+            <li>Enterprise: custom SLA</li>
+          </ul>
+          <p style="margin-top: 12px;" class="muted">For urgent onboarding needs, include your timeline in the message field.</p>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container footer-row">
+        <p>© <span id="year"></span> GBP Growth Ops</p>
+        <nav>
+          <a href="/gbp-shield/about.html">About</a>
+          <a href="/gbp-shield/login.html">Login</a>
+          <a href="/gbp-shield/signup.html">Sign Up</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script src="./contact.js"></script>
+  </body>
+</html>
