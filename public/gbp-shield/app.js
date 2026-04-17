@@ -2,6 +2,7 @@ const auditForm = document.getElementById('audit-form');
 const auditResult = document.getElementById('audit-result');
 const leadForm = document.getElementById('lead-form');
 const leadStatus = document.getElementById('lead-status');
+const header = document.querySelector('.topbar');
 
 document.getElementById('year').textContent = String(new Date().getFullYear());
 
@@ -21,6 +22,27 @@ if ('IntersectionObserver' in window && revealNodes.length) {
   for (const node of revealNodes) io.observe(node);
 } else {
   for (const node of revealNodes) node.classList.add('in');
+}
+
+const topNavLinks = [
+  ...document.querySelectorAll('.nav-links a[href^="#"]'),
+  ...document.querySelectorAll('.nav-actions a[href^="#"]')
+];
+
+for (const link of topNavLinks) {
+  link.addEventListener('click', (event) => {
+    const hash = link.getAttribute('href');
+    if (!hash || hash === '#') return;
+
+    const target = document.querySelector(hash);
+    if (!target) return;
+
+    event.preventDefault();
+    const headerOffset = (header?.offsetHeight || 74) + 8;
+    const top = target.getBoundingClientRect().top + window.scrollY - headerOffset;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    if (history?.replaceState) history.replaceState(null, '', hash);
+  });
 }
 
 const escapeHtml = (value = '') =>
@@ -113,7 +135,7 @@ function renderAudit(audit) {
       </article>
       <article class="card">
         <h4>Want this done-for-you?</h4>
-        <p class="muted">Use the Step 2 form below to start weekly managed execution with the Founding Plan.</p>
+        <p class="muted">Use the Step 2 form below to start weekly managed execution with the Starter Plan.</p>
       </article>
     </div>
   `;
@@ -157,7 +179,7 @@ leadForm?.addEventListener('submit', async (event) => {
   leadStatus.textContent = 'Submitting...';
 
   const payload = readFormData(leadForm);
-  payload.source = 'gbp-founding-beta';
+  payload.source = 'gbp-starter-trial';
 
   try {
     const res = await fetch('/api/gbp/lead', {

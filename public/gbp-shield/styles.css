@@ -243,7 +243,7 @@ h2 {
 }
 
 .anchor-title {
-  scroll-margin-top: 12px;
+  scroll-margin-top: 94px;
 }
 
 .sub,
@@ -426,6 +426,35 @@ h2 {
   margin-top: 12px;
 }
 
+.addons-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.addon-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(10, 37, 64, 0.05);
+  padding: 12px;
+}
+
+.addon-card h4 {
+  margin: 0 0 6px;
+}
+
+.addon-card p {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.addon-card strong {
+  color: var(--orange);
+}
+
 .audit-form {
   padding: 16px;
   margin-bottom: 12px;
@@ -558,7 +587,8 @@ select:focus {
   .advanced-grid,
   .grid-3,
   .lead-form,
-  .trust-row {
+  .trust-row,
+  .addons-grid {
     grid-template-columns: 1fr;
   }
 
