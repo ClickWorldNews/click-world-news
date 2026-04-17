@@ -96,7 +96,7 @@ function renderAudit(audit) {
       </article>
       <article class="card">
         <h4>What to do next</h4>
-        <p class="muted">Launch these changes this week, then track profile views, calls, and review volume weekly. If you want this done-for-you, submit the Founding Beta form below.</p>
+        <p class="muted">Launch these changes this week, then track profile views, leads, and review volume weekly. If you want us to run this weekly for you, use the Step 2 done-for-you form below.</p>
       </article>
     </div>
   `;
