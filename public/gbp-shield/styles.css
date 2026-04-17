@@ -57,18 +57,39 @@ a {
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
 }
 
 .logo-emblem {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: block;
 }
 
 .brand strong {
   display: block;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.brand-main {
+  color: var(--text);
+}
+
+.brand-sub {
+  color: var(--orange);
+}
+
+.brand small {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .nav-actions {
