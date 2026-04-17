@@ -233,6 +233,6 @@ leadForm?.addEventListener('submit', async (event) => {
       window.location.href = `/gbp-shield/signup.html?email=${email}&business=${business}`;
     }, 600);
   } catch {
-    leadStatus.textContent = 'Submission failed. Please try again or email hello@gbpgrowthops.com';
+    leadStatus.textContent = 'Submission failed. Please try again or email hello@crownpointlocal.com';
   }
 });

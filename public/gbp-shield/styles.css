@@ -60,9 +60,10 @@ a {
   gap: 10px;
 }
 
-.logo-mark {
-  color: var(--orange);
-  font-size: 0.7rem;
+.logo-emblem {
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 
 .brand strong {
