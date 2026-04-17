@@ -167,7 +167,7 @@ a {
   position: relative;
   background: linear-gradient(160deg, #0a2540, #123b67);
   color: #fff;
-  padding: 86px 0 38px;
+  padding: 92px 0 46px;
   overflow: hidden;
 }
 
@@ -192,6 +192,7 @@ a {
   margin: 0 0 10px;
   color: #ffd3b7;
   font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 h1 {
@@ -204,12 +205,12 @@ h1 {
   margin: 0;
   color: #dce8f5;
   line-height: 1.62;
-  max-width: 760px;
+  max-width: 700px;
   margin-inline: auto;
 }
 
 .hero-cta {
-  margin-top: 20px;
+  margin-top: 22px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
@@ -222,21 +223,10 @@ h1 {
   color: #fff;
 }
 
-.trust-row {
-  margin-top: 18px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.trust-row span {
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #e6eef6;
-  font-size: 0.86rem;
-  text-align: center;
-  padding: 10px;
+.trust-line {
+  margin-top: 14px;
+  color: #dce8f5;
+  font-size: 0.92rem;
 }
 
 .section {
@@ -266,10 +256,7 @@ h2 {
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 16px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 16px;
-  align-items: center;
+  display: block;
   box-shadow: 0 10px 26px rgba(10, 37, 64, 0.05);
 }
 
@@ -277,17 +264,6 @@ h2 {
   margin: 0;
   color: var(--muted);
   line-height: 1.6;
-}
-
-.problem-icon {
-  width: 54px;
-  height: 54px;
-  border-radius: 12px;
-  background: #fff1e7;
-  color: var(--orange);
-  display: grid;
-  place-items: center;
-  font-size: 1.4rem;
 }
 
 .steps-grid,
@@ -327,7 +303,7 @@ h2 {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 12px;
-  box-shadow: 0 10px 24px rgba(10, 37, 64, 0.05);
+  box-shadow: 0 8px 18px rgba(10, 37, 64, 0.04);
 }
 
 .step-card,
@@ -340,21 +316,10 @@ h2 {
   padding: 16px;
 }
 
-.icon-wrap {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: #fff1e7;
-  color: var(--orange);
-  display: inline-grid;
-  place-items: center;
-  margin-bottom: 8px;
-}
-
 .step-card h4,
 .feature-card h4,
 .price-card h3 {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
 }
 
 .step-card p,
@@ -761,12 +726,7 @@ select:focus {
   .advanced-grid,
   .grid-3,
   .lead-form,
-  .trust-row,
   .addons-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .problem-box {
     grid-template-columns: 1fr;
   }
 
