@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Parser from 'rss-parser';
+import fs from 'fs/promises';
 
 const app = express();
 const parser = new Parser({
@@ -19,6 +20,9 @@ const PORT = Number(process.env.PORT || 8093);
 const CACHE_TTL_MS = 1000 * 60 * 30;
 const cache = new Map();
 const reverseGeoCache = new Map();
+const DATA_DIR = path.join(__dirname, 'data');
+const GBP_LEADS_FILE = path.join(DATA_DIR, 'gbp-leads.jsonl');
+const GBP_AUDITS_FILE = path.join(DATA_DIR, 'gbp-audits.jsonl');
 
 const WORLD_FALLBACK_FEEDS = [
   'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
@@ -262,7 +266,244 @@ app.use((req, res, next) => {
   next();
 });
 
+const toInt = (value, fallback = 0) => {
+  const n = Number.parseInt(String(value ?? ''), 10);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+async function appendJsonLine(filePath, payload) {
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    await fs.appendFile(filePath, `${JSON.stringify(payload)}\n`, 'utf8');
+  } catch {
+    // Best-effort logging only.
+  }
+}
+
+function buildPosts({ industry, city }) {
+  const niche = industry || 'local service';
+  const place = city || 'your area';
+  const templates = [
+    ['Need fast service today?', `Our ${niche} team is available across ${place} with same-day scheduling and clear pricing.`, 'Call now'],
+    ['Local and trusted', `If you need reliable ${niche} support in ${place}, we’re ready to help with fast response times.`, 'Book service'],
+    ['Weekend availability', `Serving ${place} this weekend for urgent ${niche} requests. Licensed, insured, and straightforward.`, 'Request help'],
+    ['Before/after quality', `Every ${niche} job in ${place} gets clear communication, photo proof, and clean completion.`, 'Get a quote'],
+    ['Transparent pricing', `No surprise invoices. We provide upfront estimates for ${niche} work in ${place}.`, 'Message us'],
+    ['Emergency support', `After-hours ${niche} help available across ${place}. We respond quickly and keep you updated.`, 'Contact now'],
+    ['Seasonal maintenance', `Prevent costly breakdowns in ${place} with scheduled ${niche} maintenance this month.`, 'Schedule visit'],
+    ['Customer-first process', `From first call to finished job, our ${niche} process is built for speed and clarity in ${place}.`, 'Learn more'],
+    ['New week, open slots', `Open appointments this week for ${niche} services in ${place}. Early booking gets priority windows.`, 'Reserve spot'],
+    ['Community-focused service', `Proudly helping homes and businesses in ${place} with dependable ${niche} support.`, 'Call today']
+  ];
+
+  return templates.map(([headline, body, cta]) => ({ headline, body, cta }));
+}
+
+function buildReviewReplies({ businessName }) {
+  const name = businessName || 'our team';
+  return {
+    positive: [
+      `Thank you so much for the 5-star review. We appreciate you choosing ${name} and are glad we could help.`,
+      `We really appreciate your feedback. It means a lot to the ${name} team, and we’re always here if you need us again.`,
+      `Thanks for sharing your experience. We’re happy the service delivered what you needed.`
+    ],
+    neutral: [
+      `Thank you for the review. We appreciate your feedback and will use it to keep improving your experience.`,
+      `We’re grateful for your honest feedback. If there is anything we can do better next time, please let us know.`,
+      `Thanks for taking time to review us. We value your input and are committed to improving each visit.`
+    ],
+    negative: [
+      `Thank you for sharing this. We’re sorry your experience didn’t meet expectations. Please contact us directly so we can make this right.`,
+      `We appreciate the feedback and take this seriously. Our team wants to resolve this quickly—please message us with details.`,
+      `Sorry for the frustration here. We’d like to review your case and fix the issue. Please reach out so we can help.`
+    ]
+  };
+}
+
+function generateGbpAudit(input = {}) {
+  const businessName = sanitizeText(input.businessName || 'Business');
+  const industry = sanitizeText(input.industry || 'trade services');
+  const city = sanitizeText(input.city || 'your city');
+  const state = sanitizeText(input.state || '');
+  const website = sanitizeText(input.website || '');
+  const gbpUrl = sanitizeText(input.gbpUrl || '');
+
+  const rating = clamp(Number.parseFloat(String(input.rating || '0')) || 0, 0, 5);
+  const reviewCount = Math.max(0, toInt(input.reviewCount, 0));
+  const postsPerMonth = Math.max(0, toInt(input.postsPerMonth, 0));
+  const photoCount = Math.max(0, toInt(input.photoCount, 0));
+  const servicesCount = Math.max(0, toInt(input.servicesCount, 0));
+  const responseRate = clamp(toInt(input.responseRate, 0), 0, 100);
+  const categoriesCount = Math.max(0, toInt(input.categoriesCount, 1));
+
+  const hoursComplete = Boolean(input.hoursComplete);
+  const descriptionComplete = Boolean(input.descriptionComplete);
+  const hasBookingLink = Boolean(input.hasBookingLink);
+  const hasQna = Boolean(input.hasQna);
+
+  const profileScore =
+    (website ? 5 : 0) +
+    (gbpUrl ? 3 : 0) +
+    (hoursComplete ? 5 : 0) +
+    (descriptionComplete ? 5 : 0) +
+    Math.min(6, Math.floor(servicesCount / 2)) +
+    Math.min(6, Math.floor(photoCount / 3));
+
+  const reputationScore =
+    Math.min(12, Math.round((rating / 5) * 12)) +
+    Math.min(8, Math.floor(reviewCount / 15)) +
+    Math.min(5, Math.floor(responseRate / 20));
+
+  const activityScore =
+    Math.min(10, postsPerMonth * 2) +
+    Math.min(6, Math.floor(photoCount / 5)) +
+    (hasQna ? 4 : 0);
+
+  const localSeoScore =
+    Math.min(8, categoriesCount * 2) +
+    (hasBookingLink ? 5 : 0) +
+    (city ? 4 : 0) +
+    (state ? 2 : 0) +
+    Math.min(6, Math.floor(servicesCount / 3));
+
+  const score = clamp(profileScore + reputationScore + activityScore + localSeoScore, 8, 100);
+
+  const grade =
+    score >= 85 ? 'A' :
+    score >= 72 ? 'B' :
+    score >= 58 ? 'C' :
+    score >= 45 ? 'D' : 'F';
+
+  const priorities = [];
+  if (reviewCount < 40) {
+    priorities.push({
+      title: 'Grow review volume',
+      why: 'Low review count reduces trust and map click-through.',
+      action: 'Launch post-job review ask workflow with QR + SMS templates.',
+      impact: 'High'
+    });
+  }
+  if (responseRate < 70) {
+    priorities.push({
+      title: 'Reply to more reviews',
+      why: 'Response consistency is a visible trust signal on profile pages.',
+      action: 'Use response templates to hit 90%+ reply coverage.',
+      impact: 'High'
+    });
+  }
+  if (postsPerMonth < 4) {
+    priorities.push({
+      title: 'Increase posting cadence',
+      why: 'Inactive profiles lose freshness and engagement momentum.',
+      action: 'Publish 2-3 localized posts per week.',
+      impact: 'High'
+    });
+  }
+  if (photoCount < 20) {
+    priorities.push({
+      title: 'Upload more job photos',
+      why: 'Photo depth improves profile confidence for first-time customers.',
+      action: 'Add before/after photos every week with service captions.',
+      impact: 'Medium'
+    });
+  }
+  if (servicesCount < 10) {
+    priorities.push({
+      title: 'Expand service coverage',
+      why: 'Thin service lists miss long-tail local intent searches.',
+      action: 'Add full service menu and city modifiers.',
+      impact: 'Medium'
+    });
+  }
+  if (!hasBookingLink) {
+    priorities.push({
+      title: 'Add booking/contact link',
+      why: 'Missing direct action links lowers conversion from profile views.',
+      action: 'Connect website booking page or estimate form.',
+      impact: 'Medium'
+    });
+  }
+
+  const projectedCallLift = clamp(Math.round((100 - score) * 0.7), 8, 45);
+  const weeklyPlan = [
+    'Week 1: GBP cleanup (categories, services, description, booking link).',
+    'Week 2: Publish localized post pack + upload new job photos.',
+    'Week 3: Review request push and response cleanup to 90%+.',
+    'Week 4: Competitor gap review + repeat top performing post format.'
+  ];
+
+  return {
+    businessName,
+    industry,
+    location: [city, state].filter(Boolean).join(', ') || city || 'Local area',
+    score,
+    grade,
+    projectedCallLift,
+    summary:
+      `${businessName} is currently at ${score}/100 (${grade}). The fastest path to more inbound calls is fixing profile completeness and consistent posting/review operations.`,
+    quickWins: [
+      'Update top 8 service entries with city-specific phrasing.',
+      'Reply to every unanswered review from the last 90 days.',
+      'Post one emergency-focused and one maintenance-focused update this week.',
+      'Add 10 recent before/after photos with clear captions.',
+      'Pin a direct estimate/booking link in the profile contact section.'
+    ],
+    priorities: priorities.slice(0, 6),
+    weeklyPlan,
+    generatedPosts: buildPosts({ industry, city }),
+    reviewReplies: buildReviewReplies({ businessName })
+  };
+}
+
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.post('/api/gbp/audit', async (req, res) => {
+  try {
+    const body = req.body || {};
+    const audit = generateGbpAudit(body);
+
+    await appendJsonLine(GBP_AUDITS_FILE, {
+      ts: new Date().toISOString(),
+      businessName: audit.businessName,
+      industry: audit.industry,
+      location: audit.location,
+      score: audit.score,
+      email: sanitizeText(body.email || ''),
+      source: 'gbp-free-audit'
+    });
+
+    return res.json({ ok: true, audit });
+  } catch {
+    return res.status(500).json({ ok: false, error: 'Could not run audit right now.' });
+  }
+});
+
+app.post('/api/gbp/lead', async (req, res) => {
+  const body = req.body || {};
+  const email = sanitizeText(body.email || '');
+  const name = sanitizeText(body.name || '');
+
+  if (!email.includes('@')) {
+    return res.status(400).json({ ok: false, error: 'A valid email is required.' });
+  }
+
+  await appendJsonLine(GBP_LEADS_FILE, {
+    ts: new Date().toISOString(),
+    email,
+    name,
+    businessName: sanitizeText(body.businessName || ''),
+    website: sanitizeText(body.website || ''),
+    phone: sanitizeText(body.phone || ''),
+    notes: sanitizeText(body.notes || ''),
+    source: sanitizeText(body.source || 'gbp-site')
+  });
+
+  return res.json({ ok: true, message: 'Thanks — we got your details.' });
+});
 
 app.get('/api/news', async (req, res) => {
   const code = safeCode(req.query.country);
