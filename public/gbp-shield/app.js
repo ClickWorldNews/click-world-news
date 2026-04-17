@@ -45,6 +45,28 @@ for (const link of topNavLinks) {
   });
 }
 
+const addonTabs = [...document.querySelectorAll('.addon-tab')];
+for (const tab of addonTabs) {
+  tab.addEventListener('click', () => {
+    const targetId = tab.dataset.target;
+    if (!targetId) return;
+
+    for (const t of addonTabs) {
+      const active = t === tab;
+      t.classList.toggle('is-active', active);
+      t.setAttribute('aria-selected', active ? 'true' : 'false');
+    }
+
+    const panels = [...document.querySelectorAll('.addons-panel')];
+    for (const panel of panels) {
+      const active = panel.id === targetId;
+      panel.classList.toggle('is-active', active);
+      if (active) panel.removeAttribute('hidden');
+      else panel.setAttribute('hidden', '');
+    }
+  });
+}
+
 const escapeHtml = (value = '') =>
   String(value)
     .replace(/&/g, '&amp;')
