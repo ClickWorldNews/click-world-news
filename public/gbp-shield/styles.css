@@ -90,11 +90,18 @@ a {
 }
 
 .menu-icon {
-  width: 42px;
+  width: auto;
   min-width: 42px;
   height: 40px;
-  padding: 0;
+  padding: 0 12px;
   line-height: 1;
+  gap: 8px;
+}
+
+.menu-label {
+  font-size: 0.86rem;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .burger {
@@ -144,20 +151,35 @@ a {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  width: 230px;
+  width: 260px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
-  box-shadow: 0 16px 32px rgba(10, 37, 64, 0.12);
-  padding: 8px;
+  box-shadow: 0 18px 34px rgba(10, 37, 64, 0.14);
+  padding: 10px;
   display: grid;
-  gap: 2px;
+  gap: 3px;
   z-index: 50;
+}
+
+.menu-heading {
+  margin: 6px 8px 2px;
+  color: #8a9bad;
+  font-size: 0.7rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.menu-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 0;
 }
 
 .menu-panel a {
   border-radius: 8px;
-  padding: 9px 10px;
+  padding: 10px 10px;
   color: var(--muted);
   font-size: 0.9rem;
 }

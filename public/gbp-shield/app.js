@@ -48,6 +48,14 @@ for (const link of topNavLinks) {
   });
 }
 
+const menuLinks = [...document.querySelectorAll('.menu-panel a')];
+for (const link of menuLinks) {
+  link.addEventListener('click', () => {
+    const dropdown = link.closest('.menu-dropdown');
+    if (dropdown && dropdown.open) dropdown.open = false;
+  });
+}
+
 const addonTabs = [...document.querySelectorAll('.addon-tab')];
 for (const tab of addonTabs) {
   tab.addEventListener('click', () => {
