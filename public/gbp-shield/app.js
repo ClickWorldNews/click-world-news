@@ -25,7 +25,7 @@ if ('IntersectionObserver' in window && revealNodes.length) {
 }
 
 const topNavLinks = [
-  ...document.querySelectorAll('.nav-links a[href^="#"]'),
+  ...document.querySelectorAll('.menu-panel a[href^="#"]'),
   ...document.querySelectorAll('.nav-actions a[href^="#"]')
 ];
 
@@ -42,6 +42,9 @@ for (const link of topNavLinks) {
     const top = target.getBoundingClientRect().top + window.scrollY - headerOffset;
     window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     if (history?.replaceState) history.replaceState(null, '', hash);
+
+    const dropdown = link.closest('.menu-dropdown');
+    if (dropdown && dropdown.open) dropdown.open = false;
   });
 }
 
