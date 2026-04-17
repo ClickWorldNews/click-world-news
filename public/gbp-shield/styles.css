@@ -1,7 +1,7 @@
 :root {
   --bg: #070b16;
   --bg-mid: #0c1224;
-  --panel: rgba(17, 26, 48, 0.88);
+  --panel: rgba(16, 24, 45, 0.88);
   --panel-soft: rgba(16, 24, 44, 0.66);
   --line: rgba(194, 202, 220, 0.18);
   --text: #e7e9ef;
@@ -105,6 +105,9 @@ a {
   padding: 0.64rem 1rem;
   cursor: pointer;
   transition: transform 120ms ease, border-color 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn:hover {
@@ -171,11 +174,7 @@ h1 {
   color: var(--text);
 }
 
-.hero-visual {
-  display: grid;
-  align-items: stretch;
-}
-
+.hero-card,
 .visual-card {
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -209,6 +208,7 @@ h1 {
   font-weight: 700;
 }
 
+.hero-kpis,
 .mini-kpi {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -216,6 +216,7 @@ h1 {
   margin-top: 14px;
 }
 
+.hero-kpis div,
 .mini-kpi div {
   border: 1px solid rgba(194, 202, 220, 0.16);
   border-radius: 10px;
@@ -223,12 +224,14 @@ h1 {
   background: var(--panel-soft);
 }
 
+.hero-kpis small,
 .mini-kpi small {
   display: block;
   color: var(--muted);
   margin-bottom: 5px;
 }
 
+.hero-kpis strong,
 .mini-kpi strong {
   color: var(--ok);
 }
@@ -270,53 +273,113 @@ h2 {
   color: var(--muted);
 }
 
+.problem-copy {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.03rem;
+  line-height: 1.65;
+  max-width: 860px;
+}
+
 .clarity-grid,
 .steps,
-.pricing-grid {
+.pricing-grid,
+.features-grid,
+.stats-row,
+.testimonials {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.features-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .pricing-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.stats-row {
+  margin-bottom: 12px;
+}
+
+.stats-row > div {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--panel);
+}
+
+.stats-row strong {
+  display: block;
+  font-size: 1.6rem;
+  color: var(--gold-2);
+}
+
+.stats-row small {
+  color: var(--muted);
+}
+
 .info-card,
-.steps article,
+.feature-card,
+.step,
 .price-card,
 .audit-form,
 .audit-result,
-.cta-panel {
+.cta-panel,
+.quote-card,
+.faq-item {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--panel);
 }
 
 .info-card,
-.steps article,
-.price-card {
+.feature-card,
+.step,
+.price-card,
+.quote-card,
+.faq-item {
   padding: 14px;
 }
 
 .info-card h4,
-.steps h4,
-.price-card h3 {
+.step h4,
+.price-card h3,
+.feature-card h4,
+.quote-card strong {
   margin: 0 0 8px;
 }
 
 .info-card p,
-.steps p,
+.step p,
 .setup,
 .muted,
-.price-card li {
+.price-card li,
+.feature-card p,
+.quote-card p {
   color: var(--muted);
   line-height: 1.5;
 }
 
+.feature-card .icon,
+.step .icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(201, 164, 106, 0.2);
+  color: var(--gold-2);
+  margin-bottom: 8px;
+}
+
 .info-card p,
-.steps p,
-.setup {
+.step p,
+.setup,
+.feature-card p,
+.quote-card p {
   margin: 0;
 }
 
@@ -324,7 +387,7 @@ h2 {
   border-color: rgba(226, 192, 138, 0.35);
 }
 
-.steps span {
+.step span {
   display: inline-grid;
   place-items: center;
   width: 28px;
@@ -346,12 +409,30 @@ h2 {
 }
 
 .price-card ul {
-  margin: 8px 0 0;
+  margin: 8px 0 12px;
   padding-left: 18px;
 }
 
 .price-card.featured {
   border-color: rgba(226, 192, 138, 0.5);
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #111520;
+  background: linear-gradient(145deg, #b08a4a 0%, #e2c08a 100%);
+  padding: 5px 9px;
+}
+
+.pricing-note {
+  margin-top: 12px;
+  color: var(--muted);
 }
 
 .audit-form {
@@ -462,6 +543,25 @@ select:focus {
   line-height: 1.45;
 }
 
+.quote-card p {
+  margin-bottom: 8px;
+}
+
+.faq-list {
+  display: grid;
+  gap: 10px;
+}
+
+.faq-item summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.faq-item p {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
 .cta-panel {
   padding: 18px;
   background:
@@ -486,11 +586,25 @@ select:focus {
   display: none;
 }
 
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 360ms ease, transform 360ms ease;
+}
+
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @media (max-width: 1020px) {
   .hero-grid,
   .clarity-grid,
   .steps,
   .pricing-grid,
+  .features-grid,
+  .stats-row,
+  .testimonials,
   .field-grid,
   .advanced-grid,
   .grid-3,

@@ -5,6 +5,24 @@ const leadStatus = document.getElementById('lead-status');
 
 document.getElementById('year').textContent = String(new Date().getFullYear());
 
+const revealNodes = [...document.querySelectorAll('.reveal')];
+if ('IntersectionObserver' in window && revealNodes.length) {
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      }
+    },
+    { threshold: 0.12 }
+  );
+
+  for (const node of revealNodes) io.observe(node);
+} else {
+  for (const node of revealNodes) node.classList.add('in');
+}
+
 const escapeHtml = (value = '') =>
   String(value)
     .replace(/&/g, '&amp;')
