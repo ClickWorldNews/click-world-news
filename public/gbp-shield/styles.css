@@ -668,15 +668,7 @@ select:focus {
 .page-hero {
   background: linear-gradient(160deg, #0a2540, #123b67);
   color: #fff;
-  padding: 62px 0 28px;
-}
-
-.page-hero .kicker {
-  margin: 0 0 8px;
-  color: #ffd4b8;
-  font-size: 0.84rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
+  padding: 74px 0 28px;
 }
 
 .page-hero p {
