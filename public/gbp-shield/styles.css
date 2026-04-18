@@ -224,7 +224,7 @@ a {
   position: relative;
   background: linear-gradient(160deg, #0a2540, #123b67);
   color: #fff;
-  padding: 88px 0 48px;
+  padding: 78px 0 42px;
   overflow: hidden;
 }
 
@@ -232,8 +232,8 @@ a {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(520px 320px at 78% 16%, rgba(255, 98, 0, 0.24), transparent 70%),
-    radial-gradient(420px 260px at 90% 58%, rgba(255, 255, 255, 0.12), transparent 72%);
+    radial-gradient(500px 300px at 78% 16%, rgba(255, 98, 0, 0.16), transparent 72%),
+    radial-gradient(420px 260px at 90% 58%, rgba(255, 255, 255, 0.08), transparent 74%);
   pointer-events: none;
 }
 
@@ -246,26 +246,26 @@ a {
 }
 
 .kicker {
-  margin: 0 0 10px;
-  color: #ffd3b7;
+  margin: 0 0 8px;
+  color: #ffd4b8;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  font-size: 0.8rem;
 }
 
 h1 {
   margin: 0 0 12px;
-  font-size: clamp(1.9rem, 3.7vw, 2.75rem);
+  font-size: clamp(1.9rem, 3.7vw, 2.65rem);
   line-height: 1.08;
 }
 
 .lead {
   margin: 0;
   color: #dce8f5;
-  line-height: 1.58;
-  max-width: 700px;
+  line-height: 1.55;
+  max-width: 640px;
   margin-inline: auto;
-  font-size: 1rem;
+  font-size: 0.98rem;
 }
 
 .hero-cta {
