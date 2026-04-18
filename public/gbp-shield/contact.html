@@ -42,6 +42,26 @@
             <label>Email<input required type="email" name="email" /></label>
             <label>Business Name<input name="businessName" /></label>
             <label>Website<input name="website" /></label>
+            <label>Interested package
+              <select name="offer" id="offer-select">
+                <option value="gbp-starter">GBP Starter Plan</option>
+                <option value="gbp-growth">GBP Growth Plan</option>
+                <option value="gbp-enterprise">GBP Enterprise</option>
+                <option value="agent-starter-build">Agent Starter Build ($990 one-time)</option>
+                <option value="agent-pro-revenue-build">Agent Pro Revenue Build ($1,990 one-time)</option>
+                <option value="agent-ops-monthly">Agent Ops Monthly (from $249/mo)</option>
+                <option value="not-sure">Not sure yet</option>
+              </select>
+            </label>
+            <label>Expected monthly message volume
+              <select name="estimatedMonthlyConversations">
+                <option value="unknown">Not sure yet</option>
+                <option value="0-300">0-300 conversations</option>
+                <option value="300-1000">300-1,000 conversations</option>
+                <option value="1000-3000">1,000-3,000 conversations</option>
+                <option value="3000+">3,000+ conversations</option>
+              </select>
+            </label>
             <label>Message<textarea name="notes" rows="5" placeholder="Tell us what you need..."></textarea></label>
             <button class="btn primary" type="submit">Send Message</button>
           </form>
@@ -49,13 +69,20 @@
         </article>
 
         <article class="page-card">
-          <h3>Response windows</h3>
+          <h3>Pricing in plain English</h3>
+          <ul>
+            <li><strong>Step 1:</strong> one-time build fee to create and launch your custom agent</li>
+            <li><strong>Step 2:</strong> monthly ops fee to cover model usage, monitoring, and improvements</li>
+            <li><strong>Step 3:</strong> if your usage is high, you move to a higher tier (so delivery stays profitable)</li>
+          </ul>
+          <p style="margin-top: 12px;" class="muted">This structure prevents underpricing and protects quality as message volume grows.</p>
+
+          <h4 style="margin-top: 16px;">Response windows</h4>
           <ul>
             <li>Starter Plan: within 48 hours</li>
             <li>Growth Plan: within 24 hours</li>
             <li>Enterprise: custom SLA</li>
           </ul>
-          <p style="margin-top: 12px;" class="muted">For urgent onboarding needs, include your timeline in the message field.</p>
         </article>
       </div>
     </section>

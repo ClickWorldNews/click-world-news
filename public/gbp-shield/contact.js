@@ -4,6 +4,15 @@ const yearNode = document.getElementById('year');
 
 if (yearNode) yearNode.textContent = String(new Date().getFullYear());
 
+const qs = new URLSearchParams(window.location.search);
+const requestedOffer = qs.get('offer');
+if (requestedOffer) {
+  const offerSelect = form?.querySelector('select[name="offer"]');
+  if (offerSelect && [...offerSelect.options].some((opt) => opt.value === requestedOffer)) {
+    offerSelect.value = requestedOffer;
+  }
+}
+
 form?.addEventListener('submit', async (event) => {
   event.preventDefault();
   statusNode.textContent = 'Sending...';
