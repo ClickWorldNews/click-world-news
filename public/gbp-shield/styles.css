@@ -247,10 +247,10 @@ a {
 
 .hero .kicker {
   margin: 0 0 8px;
-  color: #ffd4b8;
-  font-weight: 600;
-  letter-spacing: 0.11em;
-  font-size: 0.74rem;
+  color: #ffd7bf;
+  font-weight: 580;
+  letter-spacing: 0.13em;
+  font-size: 0.68rem;
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
@@ -260,9 +260,9 @@ a {
 .hero .kicker::before,
 .hero .kicker::after {
   content: '';
-  width: 20px;
+  width: 18px;
   height: 1px;
-  background: rgba(255, 212, 184, 0.55);
+  background: rgba(255, 215, 191, 0.48);
 }
 
 .hero h1 {
