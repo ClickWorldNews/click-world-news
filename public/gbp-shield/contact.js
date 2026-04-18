@@ -30,7 +30,16 @@ form?.addEventListener('submit', async (event) => {
     const data = await res.json();
     if (!res.ok || !data.ok) throw new Error(data.error || 'Could not submit');
 
-    statusNode.textContent = 'Thanks — we got your message and will reply shortly.';
+    const preferred = String(payload.preferredChannel || 'email').toLowerCase();
+    const channelLabel = preferred === 'telegram'
+      ? 'Telegram'
+      : preferred === 'sms'
+        ? 'SMS/text'
+        : preferred === 'dm'
+          ? 'DM'
+          : 'email';
+
+    statusNode.textContent = `Thanks — we got your message and will reply via ${channelLabel}.`;
     form.reset();
   } catch {
     statusNode.textContent = 'Submission failed. Please try again in a minute.';

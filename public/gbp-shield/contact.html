@@ -36,12 +36,13 @@
     <section class="page-content">
       <div class="container page-grid">
         <article class="page-card">
-          <h3>Get in touch</h3>
+          <h3>Send your request</h3>
           <form id="contact-form" class="stack">
             <label>Name<input required name="name" /></label>
             <label>Email<input required type="email" name="email" /></label>
             <label>Business Name<input name="businessName" /></label>
             <label>Website<input name="website" /></label>
+
             <label>Interested package
               <select name="offer" id="offer-select">
                 <option value="gbp-starter">GBP Starter Plan</option>
@@ -59,6 +60,28 @@
                 <option value="not-sure">Not sure yet</option>
               </select>
             </label>
+
+            <label>Preferred response channel
+              <select name="preferredChannel">
+                <option value="email">Email</option>
+                <option value="telegram">Telegram</option>
+                <option value="sms">SMS / Text</option>
+                <option value="dm">Social DM</option>
+              </select>
+            </label>
+
+            <label>Telegram username (optional)
+              <input name="telegramHandle" placeholder="@yourusername" />
+            </label>
+
+            <label>Phone for SMS updates (optional)
+              <input name="phone" placeholder="+1 ..." />
+            </label>
+
+            <label>Other DM handle (optional)
+              <input name="dmHandle" placeholder="@instagram / @x / etc" />
+            </label>
+
             <label>Expected monthly AI usage (if selecting AI services)
               <select name="estimatedMonthlyConversations">
                 <option value="unknown">Not sure yet</option>
@@ -68,10 +91,11 @@
                 <option value="3000+">3,000+ actions</option>
               </select>
             </label>
+
             <label>Message<textarea name="notes" rows="5" placeholder="Tell us what you need..."></textarea></label>
             <label class="checkbox-row">
               <input type="checkbox" name="pricingAck" required />
-              <span>I understand final pricing depends on agreed build scope + selected monthly usage tier.</span>
+              <span>I understand final pricing depends on agreed scope + selected usage tier.</span>
             </label>
             <button class="btn primary" type="submit">Send Message</button>
           </form>
@@ -79,11 +103,18 @@
         </article>
 
         <article class="page-card">
-          <h3>What happens next</h3>
+          <h3>How support works</h3>
+          <ul>
+            <li>We handle communication asynchronously (email, Telegram, SMS, or DM).</li>
+            <li>No calls required — support stays asynchronous.</li>
+            <li>If you are online, we can continue the thread in real time.</li>
+          </ul>
+
+          <h4 style="margin-top: 16px;">What happens next</h4>
           <ul>
             <li>We review your request, goals, and current setup.</li>
             <li>You receive a recommended package with clear scope.</li>
-            <li>If needed, we schedule a strategy call before kickoff.</li>
+            <li>We reply through your selected channel with next steps.</li>
           </ul>
 
           <h4 style="margin-top: 16px;">Scope and pricing terms</h4>

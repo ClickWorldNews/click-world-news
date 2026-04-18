@@ -724,6 +724,11 @@ app.post('/api/gbp/lead', async (req, res) => {
     businessName: sanitizeText(body.businessName || ''),
     website: sanitizeText(body.website || ''),
     phone: sanitizeText(body.phone || ''),
+    offer: sanitizeText(body.offer || ''),
+    preferredChannel: sanitizeText(body.preferredChannel || ''),
+    telegramHandle: sanitizeText(body.telegramHandle || ''),
+    dmHandle: sanitizeText(body.dmHandle || ''),
+    estimatedMonthlyConversations: sanitizeText(body.estimatedMonthlyConversations || ''),
     notes: sanitizeText(body.notes || ''),
     source: sanitizeText(body.source || 'gbp-site')
   });
