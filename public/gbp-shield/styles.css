@@ -1233,3 +1233,70 @@ main > section.section:not(.final-cta) > .container > .pricing-note {
 #after-signup .pricing-note {
   color: var(--body-muted-contrast);
 }
+
+/* --- Agent Build package integration + lock pass --- */
+#agent-build {
+  position: relative;
+  background: linear-gradient(180deg, #f2f6fc 0%, #edf3fa 100%);
+  padding-block: 80px;
+}
+
+#agent-build .pricing-grid {
+  gap: 16px;
+}
+
+#agent-build .price-card {
+  border-radius: var(--body-card-radius);
+}
+
+#agent-build .price-card.featured::before {
+  border-radius: var(--body-card-radius) var(--body-card-radius) 0 0;
+}
+
+#agent-build .sub,
+#agent-build .plan-meta,
+#agent-build .price-card li,
+#agent-build .pricing-note,
+#agent-build .price span {
+  color: var(--body-muted-contrast);
+}
+
+@media (max-width: 780px) {
+  #problem,
+  #how,
+  #features,
+  #pricing,
+  #agent-build,
+  #addons,
+  #after-signup,
+  #results,
+  #audit,
+  #faq {
+    padding-block: 64px;
+  }
+
+  #how .steps-grid,
+  #features .features-grid,
+  #pricing .pricing-grid,
+  #agent-build .pricing-grid,
+  #addons .addons-grid,
+  #results .stats-grid,
+  #results .quote-grid,
+  #faq .faq-list {
+    gap: 12px;
+  }
+
+  #problem .problem-box,
+  #how .step-card,
+  #features .feature-card,
+  #pricing .price-card,
+  #agent-build .price-card,
+  #addons .addon-card,
+  #results .stats-grid > div,
+  #results .quote-card,
+  #faq .faq-item,
+  #audit .audit-form,
+  #audit .audit-result {
+    padding: 18px;
+  }
+}
