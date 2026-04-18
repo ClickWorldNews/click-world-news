@@ -257,31 +257,43 @@ leadForm?.addEventListener('submit', async (event) => {
 });
 
 function updateOpsEstimator() {
-  const usage = document.getElementById('ops-usage');
-  const support = document.getElementById('ops-support');
-  const output = document.getElementById('ops-estimate-output');
-  if (!usage || !support || !output) return;
+  const actionsNode = document.getElementById('ops-actions');
+  const tokensNode = document.getElementById('ops-tokens');
+  const rateNode = document.getElementById('ops-rate');
+  const supportNode = document.getElementById('ops-support');
+  const outputNode = document.getElementById('ops-estimate-output');
+  const breakdownNode = document.getElementById('ops-estimate-breakdown');
 
-  const usageValue = usage.value;
-  const supportValue = support.value;
+  if (!actionsNode || !tokensNode || !rateNode || !supportNode || !outputNode) return;
 
-  const usageBaseMap = {
-    '0-300': [249, 299],
-    '300-1000': [299, 449],
-    '1000-3000': [449, 749],
-    '3000+': [749, 1499]
-  };
+  const actions = Math.max(0, Number.parseFloat(actionsNode.value) || 0);
+  const tokensPerAction = Math.max(100, Number.parseFloat(tokensNode.value) || 0);
+  const blendedRatePerMillion = Math.max(0, Number.parseFloat(rateNode.value) || 0);
+  const supportLevel = supportNode.value;
 
-  const base = usageBaseMap[usageValue] || usageBaseMap['0-300'];
-  const multiplier = supportValue === 'priority' ? 1.2 : 1;
-  const min = Math.round(base[0] * multiplier);
-  const max = Math.round(base[1] * multiplier);
+  const modelUsageCost = actions * (tokensPerAction / 1_000_000) * blendedRatePerMillion;
+  const supportFee = supportLevel === 'priority' ? 349 : 199;
+  const infrastructureFee = 49;
+  const reliabilityBuffer = Math.max(25, modelUsageCost * 0.2);
 
-  output.innerHTML = `Estimated monthly Ops tier: <strong>$${min}–$${max}</strong> <span class="muted">(final scope and integrations may adjust this range)</span>`;
+  const rawMonthly = supportFee + infrastructureFee + modelUsageCost + reliabilityBuffer;
+  const minimumFloor = supportLevel === 'priority' ? 399 : 249;
+  const recommended = Math.max(minimumFloor, rawMonthly);
+  const upperBound = recommended * 1.15;
+
+  const minRounded = Math.round(recommended);
+  const maxRounded = Math.round(upperBound);
+
+  outputNode.innerHTML = `Estimated monthly Ops fee: <strong>$${minRounded}–$${maxRounded}</strong>`;
+
+  if (breakdownNode) {
+    breakdownNode.textContent = `Model usage ($${Math.round(modelUsageCost)}) + support ($${supportFee}) + infrastructure ($${infrastructureFee}) + reliability buffer ($${Math.round(reliabilityBuffer)})`;
+  }
 }
 
-for (const id of ['ops-usage', 'ops-support']) {
+for (const id of ['ops-actions', 'ops-tokens', 'ops-rate', 'ops-support']) {
   const node = document.getElementById(id);
+  node?.addEventListener('input', updateOpsEstimator);
   node?.addEventListener('change', updateOpsEstimator);
 }
 updateOpsEstimator();

@@ -147,16 +147,17 @@
           </div>
 
           <div class="ops-estimator" id="ops-estimator">
-            <h4>Quick monthly Ops range</h4>
-            <p class="muted">Planning tool only — final quote depends on scope and integrations.</p>
+            <h4>Monthly Ops calculator</h4>
+            <p class="muted">Transparent math: model usage + support + infrastructure + reliability buffer.</p>
             <div class="field-grid">
               <label>Expected monthly actions
-                <select id="ops-usage">
-                  <option value="0-300">0-300 actions</option>
-                  <option value="300-1000">300-1,000 actions</option>
-                  <option value="1000-3000">1,000-3,000 actions</option>
-                  <option value="3000+">3,000+ actions</option>
-                </select>
+                <input id="ops-actions" type="number" min="0" step="50" value="1200" />
+              </label>
+              <label>Avg tokens per action
+                <input id="ops-tokens" type="number" min="100" step="50" value="1200" />
+              </label>
+              <label>Blended model cost per 1M tokens ($)
+                <input id="ops-rate" type="number" min="0" step="0.1" value="3.0" />
               </label>
               <label>Support level
                 <select id="ops-support">
@@ -165,7 +166,8 @@
                 </select>
               </label>
             </div>
-            <p class="pricing-note" id="ops-estimate-output">Estimated monthly Ops tier: <strong>$249–$299</strong></p>
+            <p class="pricing-note" id="ops-estimate-output">Estimated monthly Ops fee: <strong>$249–$286</strong></p>
+            <p class="muted" id="ops-estimate-breakdown">Model usage ($4) + support ($199) + infrastructure ($49) + reliability buffer ($25)</p>
           </div>
 
           <div class="agent-legal-note">
