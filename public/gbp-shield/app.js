@@ -298,18 +298,3 @@ for (const id of ['ops-actions', 'ops-tokens', 'ops-rate', 'ops-support']) {
 }
 updateOpsEstimator();
 
-function mountSupportBotShortcut() {
-  if (document.querySelector('.support-fab')) return;
-
-  const supportUrl = 'https://t.me/Scalpoholic?text=Hi%20Crownpoint%20Local%20Support%2C%20I%20have%20a%20question%20about%20your%20packages.';
-  const fab = document.createElement('a');
-  fab.href = supportUrl;
-  fab.target = '_blank';
-  fab.rel = 'noopener noreferrer';
-  fab.className = 'support-fab';
-  fab.textContent = 'Message Support';
-  fab.setAttribute('aria-label', 'Message support on Telegram');
-  document.body.appendChild(fab);
-}
-
-mountSupportBotShortcut();
