@@ -47,7 +47,7 @@ a {
 }
 
 .nav-wrap {
-  min-height: 68px;
+  min-height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -61,18 +61,18 @@ a {
 }
 
 .logo-emblem {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   display: block;
 }
 
 .brand strong {
   display: block;
-  letter-spacing: 0.035em;
-  text-transform: uppercase;
-  font-size: 0.9rem;
+  letter-spacing: 0.012em;
+  text-transform: none;
+  font-size: 0.95rem;
   line-height: 1;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .brand-main {
@@ -80,21 +80,17 @@ a {
 }
 
 .brand-sub {
-  color: var(--orange);
+  color: #7c8da1;
+  font-weight: 600;
 }
 
 .brand small {
-  display: block;
-  margin-top: 3px;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
+  display: none;
 }
 
 .nav-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -107,19 +103,20 @@ a {
 }
 
 .menu-icon {
-  width: 42px;
-  min-width: 42px;
+  width: 40px;
+  min-width: 40px;
   height: 40px;
   padding: 0;
   line-height: 1;
   justify-content: center;
+  border-radius: 999px;
 }
 
 .burger {
   width: 16px;
   height: 2px;
   border-radius: 999px;
-  background: var(--text);
+  background: #24384f;
   position: relative;
   display: inline-block;
 }
@@ -162,11 +159,11 @@ a {
   position: absolute;
   right: 0;
   top: calc(100% + 8px);
-  width: 220px;
+  width: 210px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 12px;
   background: #fff;
-  box-shadow: 0 18px 34px rgba(10, 37, 64, 0.14);
+  box-shadow: 0 16px 28px rgba(10, 37, 64, 0.12);
   padding: 8px;
   display: grid;
   gap: 2px;
@@ -175,9 +172,9 @@ a {
 
 .menu-panel a {
   border-radius: 8px;
-  padding: 10px 10px;
+  padding: 9px 10px;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
 .menu-panel a:hover {
@@ -223,7 +220,7 @@ a {
   position: relative;
   background: linear-gradient(160deg, #0a2540, #123b67);
   color: #fff;
-  padding: 94px 0 52px;
+  padding: 88px 0 48px;
   overflow: hidden;
 }
 
@@ -254,23 +251,24 @@ a {
 
 h1 {
   margin: 0 0 12px;
-  font-size: clamp(2rem, 4.2vw, 3.2rem);
+  font-size: clamp(1.9rem, 3.7vw, 2.75rem);
   line-height: 1.08;
 }
 
 .lead {
   margin: 0;
   color: #dce8f5;
-  line-height: 1.62;
+  line-height: 1.58;
   max-width: 700px;
   margin-inline: auto;
+  font-size: 1rem;
 }
 
 .hero-cta {
   margin-top: 22px;
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 12px;
   justify-content: center;
   align-items: center;
 }
@@ -286,9 +284,9 @@ h1 {
 
 .trust-line {
   margin-top: 16px;
-  color: #dce8f5;
-  font-size: 0.88rem;
-  opacity: 0.95;
+  color: #d9e7f3;
+  font-size: 0.84rem;
+  opacity: 0.9;
 }
 
 .section {
