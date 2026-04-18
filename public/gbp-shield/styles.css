@@ -1081,3 +1081,155 @@ main > section.section:not(.final-cta) > .container > .pricing-note {
 .faq-item summary {
   padding-right: 16px;
 }
+
+/* --- Micro-luxury polish pass (below hero only) --- */
+#problem,
+#how,
+#features,
+#pricing,
+#addons,
+#after-signup,
+#results,
+#audit,
+#faq {
+  padding-block: 76px;
+}
+
+main > section.section:not(.final-cta) > .container > h2 {
+  position: relative;
+}
+
+main > section.section:not(.final-cta) > .container > h2::after {
+  content: '';
+  display: block;
+  width: 54px;
+  height: 2px;
+  margin: 10px auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff6200 0%, #ff8c47 100%);
+  opacity: 0.72;
+}
+
+.step-card,
+.feature-card,
+.price-card,
+.addon-card,
+.stats-grid > div,
+.quote-card,
+.faq-item,
+.audit-form,
+.audit-result,
+.cta-panel,
+.card,
+.page-card {
+  transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+@media (hover: hover) {
+  .step-card:hover,
+  .feature-card:hover,
+  .addon-card:hover,
+  .quote-card:hover,
+  .stats-grid > div:hover {
+    border-color: #d2dfec;
+    box-shadow: 0 18px 34px rgba(10, 37, 64, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.step-card p,
+.feature-card p,
+.addon-card p,
+.quote-card p,
+.card p {
+  max-width: 34ch;
+}
+
+.price-card ul li {
+  margin-bottom: 4px;
+}
+
+.faq-item {
+  border-left: 3px solid rgba(255, 98, 0, 0.24);
+}
+
+.faq-item[open] {
+  border-left-color: rgba(255, 98, 0, 0.62);
+}
+
+/* --- Strict micro-luxury tweak (body sections only) --- */
+:root {
+  --body-card-radius: 15px;
+  --body-muted-contrast: #556b82;
+}
+
+#problem,
+#how,
+#features,
+#pricing,
+#addons,
+#after-signup,
+#results,
+#audit,
+#faq {
+  padding-block: 80px;
+}
+
+main > section.section:not(.final-cta) > .container > h2 {
+  margin-bottom: 12px;
+}
+
+main > section.section:not(.final-cta) > .container > .sub,
+main > section.section:not(.final-cta) > .container > .pricing-note {
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+#problem .problem-box,
+#how .step-card,
+#features .feature-card,
+#pricing .price-card,
+#addons .addon-card,
+#results .stats-grid > div,
+#results .quote-card,
+#faq .faq-item,
+#audit .audit-form,
+#audit .audit-result {
+  border-radius: var(--body-card-radius);
+}
+
+#pricing .price-card.featured::before {
+  border-radius: var(--body-card-radius) var(--body-card-radius) 0 0;
+}
+
+#how .steps-grid,
+#features .features-grid,
+#pricing .pricing-grid,
+#addons .addons-grid,
+#results .stats-grid,
+#results .quote-grid,
+#faq .faq-list {
+  gap: 16px;
+}
+
+#results .stats-grid {
+  margin-bottom: 16px;
+}
+
+#problem .problem-box p,
+#how .step-card p,
+#features .feature-card p,
+#pricing .price-card li,
+#pricing .setup,
+#pricing .plan-meta,
+#pricing .pricing-note,
+#pricing .price span,
+#addons .addon-card p,
+#results .quote-card p,
+#faq .faq-item p,
+#audit label,
+#audit .sub,
+#after-signup .step-card p,
+#after-signup .pricing-note {
+  color: var(--body-muted-contrast);
+}
