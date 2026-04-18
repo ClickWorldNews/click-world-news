@@ -1476,3 +1476,33 @@ main > section.section:not(.final-cta) > .container > .pricing-note {
     padding: 18px;
   }
 }
+
+.support-fab {
+  position: fixed;
+  right: 16px;
+  bottom: 18px;
+  z-index: 90;
+  border-radius: 999px;
+  border: 1px solid #d5e2ef;
+  background: linear-gradient(145deg, #ffffff 0%, #f3f8ff 100%);
+  color: #183451;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 10px 14px;
+  box-shadow: 0 14px 28px rgba(10, 37, 64, 0.16);
+}
+
+.support-fab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(10, 37, 64, 0.2);
+}
+
+@media (max-width: 780px) {
+  .support-fab {
+    right: 12px;
+    bottom: 14px;
+    font-size: 0.8rem;
+    padding: 9px 12px;
+  }
+}

@@ -272,12 +272,12 @@ function updateOpsEstimator() {
   const supportLevel = supportNode.value;
 
   const modelUsageCost = actions * (tokensPerAction / 1_000_000) * blendedRatePerMillion;
-  const supportFee = supportLevel === 'priority' ? 349 : 199;
-  const infrastructureFee = 49;
-  const reliabilityBuffer = Math.max(25, modelUsageCost * 0.2);
+  const supportFee = supportLevel === 'priority' ? 399 : 249;
+  const infrastructureFee = 59;
+  const reliabilityBuffer = Math.max(39, modelUsageCost * 0.25);
 
   const rawMonthly = supportFee + infrastructureFee + modelUsageCost + reliabilityBuffer;
-  const minimumFloor = supportLevel === 'priority' ? 399 : 249;
+  const minimumFloor = supportLevel === 'priority' ? 449 : 299;
   const recommended = Math.max(minimumFloor, rawMonthly);
   const upperBound = recommended * 1.15;
 
@@ -297,3 +297,19 @@ for (const id of ['ops-actions', 'ops-tokens', 'ops-rate', 'ops-support']) {
   node?.addEventListener('change', updateOpsEstimator);
 }
 updateOpsEstimator();
+
+function mountSupportBotShortcut() {
+  if (document.querySelector('.support-fab')) return;
+
+  const supportUrl = 'https://t.me/Scalpoholic?text=Hi%20Crownpoint%20Local%20Support%2C%20I%20have%20a%20question%20about%20your%20packages.';
+  const fab = document.createElement('a');
+  fab.href = supportUrl;
+  fab.target = '_blank';
+  fab.rel = 'noopener noreferrer';
+  fab.className = 'support-fab';
+  fab.textContent = 'Support Bot';
+  fab.setAttribute('aria-label', 'Message support bot on Telegram');
+  document.body.appendChild(fab);
+}
+
+mountSupportBotShortcut();
