@@ -203,9 +203,13 @@ a {
 }
 
 .btn.primary {
-  background: linear-gradient(145deg, var(--orange), var(--orange-soft));
+  background: var(--orange);
   border-color: #e25900;
   color: #fff;
+}
+
+.btn.primary:hover {
+  background: #f15d00;
 }
 
 .btn.ghost {
