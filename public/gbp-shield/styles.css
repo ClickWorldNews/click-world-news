@@ -1307,6 +1307,41 @@ main > section.section:not(.final-cta) > .container > .pricing-note {
   border-radius: 12px;
 }
 
+#agent-build .agent-legal-note {
+  margin-top: 12px;
+  border-top: 1px dashed #d2deeb;
+  padding-top: 12px;
+}
+
+#agent-build .agent-legal-note h4 {
+  margin: 0 0 8px;
+  color: #243f5a;
+}
+
+#agent-build .agent-legal-note ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+#agent-build .agent-legal-note li {
+  color: #4f647d;
+  margin-bottom: 4px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: #546b83;
+}
+
+.checkbox-row input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
 @media (max-width: 780px) {
   #problem,
   #how,

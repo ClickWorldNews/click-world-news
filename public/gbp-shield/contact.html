@@ -63,6 +63,10 @@
               </select>
             </label>
             <label>Message<textarea name="notes" rows="5" placeholder="Tell us what you need..."></textarea></label>
+            <label class="checkbox-row">
+              <input type="checkbox" name="pricingAck" required />
+              <span>I understand final pricing depends on agreed build scope + selected monthly usage tier.</span>
+            </label>
             <button class="btn primary" type="submit">Send Message</button>
           </form>
           <p id="contact-status" class="muted"></p>
@@ -76,6 +80,14 @@
             <li><strong>Step 3:</strong> if your usage is high, you move to a higher tier (so delivery stays profitable)</li>
           </ul>
           <p style="margin-top: 12px;" class="muted">This structure prevents underpricing and protects quality as message volume grows.</p>
+
+          <h4 style="margin-top: 16px;">Pricing + scope notice</h4>
+          <ul>
+            <li>Build fees cover agreed scope and launch deliverables.</li>
+            <li>Monthly plans cover maintenance inside the selected usage tier.</li>
+            <li>Heavy usage/new integrations/new workflows may require a plan upgrade or separate quote.</li>
+            <li>Third-party API/platform costs are client-billed or passed through at cost.</li>
+          </ul>
 
           <h4 style="margin-top: 16px;">Response windows</h4>
           <ul>
