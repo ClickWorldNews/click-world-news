@@ -307,8 +307,8 @@ function mountSupportBotShortcut() {
   fab.target = '_blank';
   fab.rel = 'noopener noreferrer';
   fab.className = 'support-fab';
-  fab.textContent = 'Support Bot';
-  fab.setAttribute('aria-label', 'Message support bot on Telegram');
+  fab.textContent = 'Message Support';
+  fab.setAttribute('aria-label', 'Message support on Telegram');
   document.body.appendChild(fab);
 }
 
