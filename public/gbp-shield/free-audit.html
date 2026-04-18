@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Free Audit — Crownpoint Local</title>
+    <meta name="description" content="Run a transparent GBP audit estimate with score breakdown, confidence level, and action plan." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container nav-wrap">
+        <a href="/gbp-shield/" class="brand">
+          <img class="logo-emblem" src="/gbp-shield/logo-crownpoint.svg" alt="Crownpoint Local logo" />
+          <div>
+            <strong><span class="brand-main">Crownpoint</span> <span class="brand-sub">Local</span></strong>
+          </div>
+        </a>
+
+        <div class="nav-actions">
+          <a href="/gbp-shield/contact.html" class="btn primary">Talk to Us</a>
+          <details class="menu-dropdown">
+            <summary class="btn ghost menu-trigger menu-icon" aria-label="Open site menu" title="Menu">
+              <span class="burger" aria-hidden="true"></span>
+              <span class="sr-only">Menu</span>
+            </summary>
+            <div class="menu-panel">
+              <a href="/gbp-shield/">Home</a>
+              <a href="/gbp-shield/gbp-management.html">GBP Management</a>
+              <a href="/gbp-shield/ai-agent-build.html">AI Agent Build</a>
+              <a href="/gbp-shield/seo-addons.html">SEO Add-Ons</a>
+              <a href="/gbp-shield/pricing.html">Pricing</a>
+              <a href="/gbp-shield/free-audit.html">Free Audit</a>
+              <a href="/gbp-shield/contact.html">Contact</a>
+            </div>
+          </details>
+        </div>
+      </div>
+    </header>
+
+    <section class="page-hero">
+      <div class="container">
+        <p class="kicker">Free Tool</p>
+        <h1>GBP Audit (Estimate Mode)</h1>
+        <p>
+          Get a transparent score breakdown with confidence level and action priorities. This is an estimate unless live data is verified.
+        </p>
+      </div>
+    </section>
+
+    <section class="page-content">
+      <div class="container narrow reveal">
+        <form id="audit-form" class="audit-form">
+          <div class="field-grid">
+            <label>Business name<input required name="businessName" /></label>
+            <label>Industry<input required name="industry" placeholder="Restaurant, Plumbing, HVAC..." /></label>
+            <label>City<input required name="city" /></label>
+            <label>State<input name="state" /></label>
+            <label>Email for report<input required type="email" name="email" placeholder="you@company.com" /></label>
+            <label>Website<input name="website" placeholder="https://..." /></label>
+            <label>GBP URL<input name="gbpUrl" placeholder="https://..." /></label>
+            <label>Use live lookup (if available)
+              <select name="useLiveLookup">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </label>
+          </div>
+
+          <details class="advanced-toggle" open>
+            <summary>Optional performance data (improves accuracy)</summary>
+            <div class="field-grid advanced-grid">
+              <label>Google rating<input type="number" name="rating" min="0" max="5" step="0.1" /></label>
+              <label>Total review count<input type="number" name="reviewCount" min="0" /></label>
+              <label>Posts per month<input type="number" name="postsPerMonth" min="0" /></label>
+              <label>Photo count<input type="number" name="photoCount" min="0" /></label>
+              <label>Services listed<input type="number" name="servicesCount" min="0" /></label>
+              <label>Review reply rate %<input type="number" name="responseRate" min="0" max="100" /></label>
+              <label>Categories configured<input type="number" name="categoriesCount" min="1" /></label>
+              <label>Hours configured
+                <select name="hoursStatus">
+                  <option value="unknown">Unknown</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </label>
+              <label>Description quality
+                <select name="descriptionStatus">
+                  <option value="unknown">Unknown</option>
+                  <option value="yes">Complete / optimized</option>
+                  <option value="no">Thin / missing</option>
+                </select>
+              </label>
+              <label>Booking/contact link
+                <select name="bookingStatus">
+                  <option value="unknown">Unknown</option>
+                  <option value="yes">Present</option>
+                  <option value="no">Missing</option>
+                </select>
+              </label>
+              <label>Q&amp;A activity
+                <select name="qnaStatus">
+                  <option value="unknown">Unknown</option>
+                  <option value="yes">Present</option>
+                  <option value="no">Not present</option>
+                </select>
+              </label>
+            </div>
+          </details>
+
+          <button type="submit" class="btn primary wide">Run Free Audit</button>
+        </form>
+
+        <div id="audit-result" class="audit-result hidden"></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="container footer-row">
+        <p>© <span id="year"></span> Crownpoint Local</p>
+        <nav>
+          <a href="/gbp-shield/pricing.html">Pricing</a>
+          <a href="/gbp-shield/contact.html">Contact</a>
+          <a href="/gbp-shield/login.html">Login</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -4,7 +4,8 @@ const leadForm = document.getElementById('lead-form');
 const leadStatus = document.getElementById('lead-status');
 const header = document.querySelector('.topbar');
 
-document.getElementById('year').textContent = String(new Date().getFullYear());
+const yearNode = document.getElementById('year');
+if (yearNode) yearNode.textContent = String(new Date().getFullYear());
 
 const revealNodes = [...document.querySelectorAll('.reveal')];
 if ('IntersectionObserver' in window && revealNodes.length) {
@@ -115,7 +116,6 @@ function renderAudit(audit) {
 
   const quickWins = (audit.quickWins || []).slice(0, 4).map((x) => `<li>${escapeHtml(x)}</li>`).join('');
   const weeklyPlan = (audit.weeklyPlan || []).slice(0, 3).map((x) => `<li>${escapeHtml(x)}</li>`).join('');
-
   const posts = (audit.generatedPosts || [])
     .slice(0, 3)
     .map(
@@ -127,17 +127,31 @@ function renderAudit(audit) {
     )
     .join('');
 
-  const repliesPositive = (audit.reviewReplies?.positive || [])
-    .slice(0, 2)
-    .map((x) => `<li>${escapeHtml(x)}</li>`)
+  const breakdown = (audit.scoreBreakdown || [])
+    .map(
+      (part) => `
+      <article class="card">
+        <h4>${escapeHtml(part.name || 'Signal')}</h4>
+        <p><strong>${escapeHtml(part.points)}/${escapeHtml(part.maxPoints)}</strong></p>
+        <p class="muted">${escapeHtml(part.reason || '')}</p>
+      </article>`
+    )
     .join('');
+
+  const dataGaps = (audit.dataGaps || []).map((x) => `<li>${escapeHtml(x)}</li>`).join('');
 
   auditResult.innerHTML = `
     <h3>${escapeHtml(audit.businessName)} — Audit Summary</h3>
     <div class="score-box">
       <div class="score-pill">${escapeHtml(audit.score)}/100</div>
       <div>
-        <p><strong>Grade ${escapeHtml(audit.grade)}</strong> · Estimated lead-lift opportunity: <strong>+${escapeHtml(audit.projectedCallLift)}%</strong></p>
+        <p>
+          <strong>Grade ${escapeHtml(audit.grade)}</strong>
+          ${audit.projectedCallLift ? `· Opportunity: <strong>+${escapeHtml(audit.projectedCallLift)}%</strong>` : ''}
+        </p>
+        <p class="muted">Mode: <strong>${escapeHtml(audit.modeLabel || 'Estimate')}</strong> · Confidence: <strong>${escapeHtml(audit.confidenceLabel || 'Medium')}</strong></p>
+        <p class="muted">Data source: ${escapeHtml(audit.dataSourceSummary || 'self-reported form input')}</p>
+        ${audit.liveDataError ? `<p class="muted">Live lookup note: ${escapeHtml(audit.liveDataError)}</p>` : ''}
         <p class="muted">${escapeHtml(audit.summary)}</p>
       </div>
     </div>
@@ -158,17 +172,22 @@ function renderAudit(audit) {
     </div>
 
     <div class="grid-3" style="margin-top:12px;">
+      ${breakdown || '<article class="card"><p class="muted">No score breakdown available.</p></article>'}
+    </div>
+
+    <div class="grid-3" style="margin-top:12px;">
       <article class="card">
         <h4>Post ideas</h4>
         <ul>${posts}</ul>
       </article>
       <article class="card">
-        <h4>Review reply examples</h4>
-        <ul>${repliesPositive}</ul>
+        <h4>Data gaps to improve confidence</h4>
+        <ul>${dataGaps || '<li>None — enough data for current estimate.</li>'}</ul>
       </article>
       <article class="card">
-        <h4>Want this done-for-you?</h4>
-        <p class="muted">Use the Step 2 form below to start weekly managed execution with the Starter Plan.</p>
+        <h4>Need a verified audit?</h4>
+        <p class="muted">We can run a deeper, data-backed review and map the exact implementation plan.</p>
+        <a href="/gbp-shield/contact.html?offer=not-sure" class="inline-link">Request verified audit support</a>
       </article>
     </div>
   `;
@@ -198,7 +217,7 @@ auditForm?.addEventListener('submit', async (event) => {
     }
 
     renderAudit(data.audit);
-  } catch (error) {
+  } catch {
     auditResult.innerHTML = `<p class="muted">Could not run audit right now. Please try again in a minute.</p>`;
     auditResult.classList.remove('hidden');
   } finally {
@@ -209,7 +228,7 @@ auditForm?.addEventListener('submit', async (event) => {
 
 leadForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
-  leadStatus.textContent = 'Submitting...';
+  if (leadStatus) leadStatus.textContent = 'Submitting...';
 
   const payload = readFormData(leadForm);
   payload.source = 'gbp-starter-trial';
@@ -226,13 +245,43 @@ leadForm?.addEventListener('submit', async (event) => {
       throw new Error(data.error || 'Could not submit');
     }
 
-    leadStatus.textContent = 'Success — sending you to onboarding...';
+    if (leadStatus) leadStatus.textContent = 'Success — sending you to onboarding...';
     const email = encodeURIComponent(payload.email || '');
     const business = encodeURIComponent(payload.businessName || '');
     setTimeout(() => {
       window.location.href = `/gbp-shield/signup.html?email=${email}&business=${business}`;
     }, 600);
   } catch {
-    leadStatus.textContent = 'Submission failed. Please try again or email hello@crownpointlocal.com';
+    if (leadStatus) leadStatus.textContent = 'Submission failed. Please try again or email hello@crownpointlocal.com';
   }
 });
+
+function updateOpsEstimator() {
+  const usage = document.getElementById('ops-usage');
+  const support = document.getElementById('ops-support');
+  const output = document.getElementById('ops-estimate-output');
+  if (!usage || !support || !output) return;
+
+  const usageValue = usage.value;
+  const supportValue = support.value;
+
+  const usageBaseMap = {
+    '0-300': [249, 299],
+    '300-1000': [299, 449],
+    '1000-3000': [449, 749],
+    '3000+': [749, 1499]
+  };
+
+  const base = usageBaseMap[usageValue] || usageBaseMap['0-300'];
+  const multiplier = supportValue === 'priority' ? 1.2 : 1;
+  const min = Math.round(base[0] * multiplier);
+  const max = Math.round(base[1] * multiplier);
+
+  output.innerHTML = `Estimated monthly Ops tier: <strong>$${min}–$${max}</strong> <span class="muted">(final scope and integrations may adjust this range)</span>`;
+}
+
+for (const id of ['ops-usage', 'ops-support']) {
+  const node = document.getElementById(id);
+  node?.addEventListener('change', updateOpsEstimator);
+}
+updateOpsEstimator();

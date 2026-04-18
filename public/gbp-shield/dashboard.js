@@ -7,7 +7,7 @@ const yearNode = document.getElementById('year');
 if (yearNode) yearNode.textContent = String(new Date().getFullYear());
 
 document.getElementById('welcome-title').textContent = `Dashboard · ${email}`;
-document.getElementById('welcome-sub').textContent = 'Your weekly KPI view, action queue, and competitor tracking.';
+document.getElementById('welcome-sub').textContent = 'Your audit history, action queue, and next-step priorities.';
 
 document.getElementById('plan-label').textContent = `Plan: ${plan[0].toUpperCase()}${plan.slice(1)}`;
 document.getElementById('onboard-label').textContent = onboarded
@@ -17,29 +17,38 @@ document.getElementById('onboard-label').textContent = onboarded
 const seedData = JSON.parse(localStorage.getItem('gbp.dashboard.seed') || '{}');
 const profile = JSON.parse(localStorage.getItem('gbp.client.profile') || '{}');
 
-const profileViews = Number(seedData.profileViews || 238);
-const callActions = Number(seedData.callActions || 39);
-const reviewReplies = Number(seedData.reviewReplies || 21);
-const score = Number(seedData.score || 74);
+const auditRuns = Number(seedData.auditRuns || 0);
+const lastAuditScore = Number.isFinite(Number(seedData.lastAuditScore)) ? Number(seedData.lastAuditScore) : null;
+const confidencePct = Number.isFinite(Number(seedData.confidencePct)) ? Number(seedData.confidencePct) : null;
+const lastUpdated = seedData.lastUpdated ? new Date(seedData.lastUpdated) : null;
 
-document.getElementById('kpi-views').textContent = profileViews;
-document.getElementById('kpi-calls').textContent = callActions;
-document.getElementById('kpi-replies').textContent = reviewReplies;
-document.getElementById('kpi-score').textContent = `${score}/100`;
+const kpiViews = document.getElementById('kpi-views');
+const kpiCalls = document.getElementById('kpi-calls');
+const kpiReplies = document.getElementById('kpi-replies');
+const kpiScore = document.getElementById('kpi-score');
 
-document.getElementById('bar-complete').style.width = `${Math.min(100, score + 8)}%`;
-document.getElementById('bar-posts').style.width = `${Math.min(100, score - 4)}%`;
-document.getElementById('bar-reviews').style.width = `${Math.min(100, score - 2)}%`;
+if (kpiViews) kpiViews.textContent = String(auditRuns || 0);
+if (kpiCalls) kpiCalls.textContent = lastAuditScore === null ? '--' : `${lastAuditScore}/100`;
+if (kpiReplies) kpiReplies.textContent = confidencePct === null ? '--' : `${confidencePct}%`;
+if (kpiScore) kpiScore.textContent = lastUpdated && !Number.isNaN(lastUpdated.getTime())
+  ? lastUpdated.toLocaleDateString()
+  : '--';
+
+const scoreForBars = lastAuditScore ?? 52;
+document.getElementById('bar-complete').style.width = `${Math.min(100, scoreForBars)}%`;
+document.getElementById('bar-posts').style.width = `${Math.min(100, Math.max(12, scoreForBars - 8))}%`;
+document.getElementById('bar-reviews').style.width = `${Math.min(100, Math.max(8, scoreForBars - 4))}%`;
 
 const defaultTasks = [
-  'Publish this week’s localized GBP post',
-  'Reply to all new incoming reviews',
-  'Refresh services + categories for top converting city',
-  'Review competitor movement and update action plan'
+  'Run a fresh audit this week to update your baseline.',
+  'Close one top-priority gap from the latest recommendations.',
+  'Keep posting and review response cadence active.',
+  'Book a strategy check-in if score has plateaued.'
 ];
 
 const taskList = document.getElementById('task-list');
-for (const task of defaultTasks) {
+const taskItems = Array.isArray(seedData.tasks) && seedData.tasks.length ? seedData.tasks : defaultTasks;
+for (const task of taskItems) {
   const li = document.createElement('li');
   li.textContent = task;
   taskList.appendChild(li);

@@ -282,6 +282,26 @@ async function appendJsonLine(filePath, payload) {
   }
 }
 
+async function readJsonLines(filePath) {
+  try {
+    const raw = await fs.readFile(filePath, 'utf8');
+    return raw
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        try {
+          return JSON.parse(line);
+        } catch {
+          return null;
+        }
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 function buildPosts({ industry, city }) {
   const niche = industry || 'local business';
   const place = city || 'your area';
@@ -353,117 +373,272 @@ function buildReviewReplies({ businessName }) {
   };
 }
 
-function generateGbpAudit(input = {}) {
+const hasText = (value) => typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null;
+
+const parseTriState = (value) => {
+  if (value === true || value === false) return value;
+  const v = String(value || '').trim().toLowerCase();
+  if (['yes', 'true', '1', 'present', 'complete'].includes(v)) return true;
+  if (['no', 'false', '0', 'missing'].includes(v)) return false;
+  return null;
+};
+
+async function enrichAuditInputWithGooglePlaces(input = {}) {
+  const apiKey = String(process.env.GOOGLE_PLACES_API_KEY || '').trim();
+  const allowLookup = String(input.useLiveLookup ?? 'true').toLowerCase() !== 'false';
+
+  if (!apiKey || !allowLookup || !hasText(input.businessName) || !hasText(input.city)) {
+    return {
+      mergedInput: input,
+      liveDataUsed: false,
+      liveDataSource: 'self-reported form input',
+      liveDataError: null
+    };
+  }
+
+  try {
+    const textQuery = [
+      sanitizeText(input.businessName || ''),
+      sanitizeText(input.city || ''),
+      sanitizeText(input.state || '')
+    ].filter(Boolean).join(' ');
+
+    const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.rating,places.userRatingCount,places.primaryType,places.websiteUri,places.regularOpeningHours'
+      },
+      body: JSON.stringify({
+        textQuery,
+        maxResultCount: 1,
+        languageCode: 'en'
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Google Places lookup failed (${response.status})`);
+    }
+
+    const payload = await response.json();
+    const place = payload?.places?.[0];
+    if (!place) {
+      return {
+        mergedInput: input,
+        liveDataUsed: false,
+        liveDataSource: 'self-reported form input',
+        liveDataError: 'No place match found'
+      };
+    }
+
+    const mergedInput = { ...input };
+
+    if (!hasText(mergedInput.website) && hasText(place.websiteUri)) {
+      mergedInput.website = place.websiteUri;
+    }
+    if (!hasText(mergedInput.rating) && Number.isFinite(place.rating)) {
+      mergedInput.rating = place.rating;
+    }
+    if (!hasText(mergedInput.reviewCount) && Number.isFinite(place.userRatingCount)) {
+      mergedInput.reviewCount = place.userRatingCount;
+    }
+    if (!hasText(mergedInput.hoursStatus) && place.regularOpeningHours) {
+      mergedInput.hoursStatus = 'yes';
+    }
+
+    mergedInput.livePlaceName = sanitizeText(place?.displayName?.text || '');
+    mergedInput.livePlaceAddress = sanitizeText(place?.formattedAddress || '');
+
+    return {
+      mergedInput,
+      liveDataUsed: true,
+      liveDataSource: 'Google Places + self-reported form input',
+      liveDataError: null
+    };
+  } catch (error) {
+    return {
+      mergedInput: input,
+      liveDataUsed: false,
+      liveDataSource: 'self-reported form input',
+      liveDataError: sanitizeText(error?.message || 'Live lookup unavailable')
+    };
+  }
+}
+
+function generateGbpAudit(input = {}, context = {}) {
   const businessName = sanitizeText(input.businessName || 'Business');
-  const industry = sanitizeText(input.industry || 'trade services');
+  const industry = sanitizeText(input.industry || 'local services');
   const city = sanitizeText(input.city || 'your city');
   const state = sanitizeText(input.state || '');
   const website = sanitizeText(input.website || '');
   const gbpUrl = sanitizeText(input.gbpUrl || '');
 
-  const rating = clamp(Number.parseFloat(String(input.rating || '0')) || 0, 0, 5);
-  const reviewCount = Math.max(0, toInt(input.reviewCount, 0));
-  const postsPerMonth = Math.max(0, toInt(input.postsPerMonth, 0));
-  const photoCount = Math.max(0, toInt(input.photoCount, 0));
-  const servicesCount = Math.max(0, toInt(input.servicesCount, 0));
-  const responseRate = clamp(toInt(input.responseRate, 0), 0, 100);
-  const categoriesCount = Math.max(0, toInt(input.categoriesCount, 1));
+  const rating = hasText(input.rating) ? clamp(Number.parseFloat(String(input.rating)) || 0, 0, 5) : null;
+  const reviewCount = hasText(input.reviewCount) ? Math.max(0, toInt(input.reviewCount, 0)) : null;
+  const postsPerMonth = hasText(input.postsPerMonth) ? Math.max(0, toInt(input.postsPerMonth, 0)) : null;
+  const photoCount = hasText(input.photoCount) ? Math.max(0, toInt(input.photoCount, 0)) : null;
+  const servicesCount = hasText(input.servicesCount) ? Math.max(0, toInt(input.servicesCount, 0)) : null;
+  const responseRate = hasText(input.responseRate) ? clamp(toInt(input.responseRate, 0), 0, 100) : null;
+  const categoriesCount = hasText(input.categoriesCount) ? Math.max(0, toInt(input.categoriesCount, 0)) : null;
 
-  const hoursComplete = Boolean(input.hoursComplete);
-  const descriptionComplete = Boolean(input.descriptionComplete);
-  const hasBookingLink = Boolean(input.hasBookingLink);
-  const hasQna = Boolean(input.hasQna);
+  const hoursStatus = parseTriState(input.hoursStatus ?? input.hoursComplete);
+  const descriptionStatus = parseTriState(input.descriptionStatus ?? input.descriptionComplete);
+  const bookingStatus = parseTriState(input.bookingStatus ?? input.hasBookingLink);
+  const qnaStatus = parseTriState(input.qnaStatus ?? input.hasQna);
 
-  const profileScore =
-    (website ? 5 : 0) +
-    (gbpUrl ? 3 : 0) +
-    (hoursComplete ? 5 : 0) +
-    (descriptionComplete ? 5 : 0) +
-    Math.min(6, Math.floor(servicesCount / 2)) +
-    Math.min(6, Math.floor(photoCount / 3));
+  let signalsUsed = 0;
+  const totalSignals = 11;
 
-  const reputationScore =
-    Math.min(12, Math.round((rating / 5) * 12)) +
-    Math.min(8, Math.floor(reviewCount / 15)) +
-    Math.min(5, Math.floor(responseRate / 20));
+  let profileScore = 12;
+  let reputationScore = 12;
+  let activityScore = 12;
+  let conversionScore = 12;
 
-  const activityScore =
-    Math.min(10, postsPerMonth * 2) +
-    Math.min(6, Math.floor(photoCount / 5)) +
-    (hasQna ? 4 : 0);
+  if (hasText(website)) {
+    profileScore += 5;
+    signalsUsed += 1;
+  } else if (Object.prototype.hasOwnProperty.call(input, 'website')) {
+    profileScore -= 3;
+    signalsUsed += 1;
+  }
 
-  const localSeoScore =
-    Math.min(8, categoriesCount * 2) +
-    (hasBookingLink ? 5 : 0) +
-    (city ? 4 : 0) +
-    (state ? 2 : 0) +
-    Math.min(6, Math.floor(servicesCount / 3));
+  if (hasText(gbpUrl)) {
+    profileScore += 4;
+    signalsUsed += 1;
+  }
 
-  const score = clamp(profileScore + reputationScore + activityScore + localSeoScore, 8, 100);
+  if (hoursStatus !== null) {
+    profileScore += hoursStatus ? 3 : -3;
+    signalsUsed += 1;
+  }
+
+  if (descriptionStatus !== null) {
+    profileScore += descriptionStatus ? 3 : -2;
+    signalsUsed += 1;
+  }
+
+  if (servicesCount !== null) {
+    profileScore += servicesCount >= 20 ? 3 : servicesCount >= 10 ? 1 : servicesCount >= 5 ? -1 : -3;
+    conversionScore += servicesCount >= 20 ? 3 : servicesCount >= 10 ? 2 : servicesCount >= 5 ? -1 : -3;
+    signalsUsed += 1;
+  }
+
+  if (categoriesCount !== null) {
+    profileScore += categoriesCount >= 4 ? 2 : categoriesCount >= 2 ? 1 : -1;
+    conversionScore += categoriesCount >= 4 ? 2 : categoriesCount >= 2 ? 1 : -2;
+    signalsUsed += 1;
+  }
+
+  if (rating !== null) {
+    reputationScore += rating >= 4.6 ? 6 : rating >= 4.2 ? 4 : rating >= 3.8 ? 1 : rating >= 3.4 ? -3 : -6;
+    signalsUsed += 1;
+  }
+
+  if (reviewCount !== null) {
+    reputationScore += reviewCount >= 150 ? 5 : reviewCount >= 60 ? 3 : reviewCount >= 20 ? 0 : reviewCount >= 8 ? -3 : -6;
+    signalsUsed += 1;
+  }
+
+  if (responseRate !== null) {
+    reputationScore += responseRate >= 90 ? 4 : responseRate >= 70 ? 1 : responseRate >= 40 ? -2 : -5;
+    conversionScore += responseRate >= 90 ? 2 : responseRate >= 70 ? 1 : responseRate >= 40 ? -1 : -2;
+    signalsUsed += 1;
+  }
+
+  if (postsPerMonth !== null) {
+    activityScore += postsPerMonth >= 8 ? 5 : postsPerMonth >= 4 ? 3 : postsPerMonth >= 2 ? 0 : postsPerMonth >= 1 ? -2 : -5;
+    signalsUsed += 1;
+  }
+
+  if (photoCount !== null) {
+    activityScore += photoCount >= 60 ? 5 : photoCount >= 25 ? 2 : photoCount >= 10 ? 0 : -3;
+    signalsUsed += 1;
+  }
+
+  if (bookingStatus !== null) {
+    conversionScore += bookingStatus ? 4 : -4;
+  }
+
+  if (qnaStatus !== null) {
+    activityScore += qnaStatus ? 2 : -1;
+  }
+
+  profileScore = clamp(profileScore, 4, 25);
+  reputationScore = clamp(reputationScore, 4, 25);
+  activityScore = clamp(activityScore, 4, 25);
+  conversionScore = clamp(conversionScore, 4, 25);
+
+  const score = clamp(Math.round(profileScore + reputationScore + activityScore + conversionScore), 20, 96);
+  const confidencePct = clamp(Math.round((signalsUsed / totalSignals) * 100), 18, 100);
+
+  const confidenceLabel = confidencePct >= 75 ? 'High' : confidencePct >= 45 ? 'Medium' : 'Low';
+  const modeLabel = context.liveDataUsed ? 'Estimate + live profile data' : 'Estimate';
 
   const grade =
-    score >= 85 ? 'A' :
-    score >= 72 ? 'B' :
-    score >= 58 ? 'C' :
-    score >= 45 ? 'D' : 'F';
+    score >= 86 ? 'A' :
+    score >= 74 ? 'B' :
+    score >= 62 ? 'C' :
+    score >= 50 ? 'D' : 'F';
 
   const priorities = [];
-  if (reviewCount < 40) {
+  if ((reviewCount ?? 0) < 40) {
     priorities.push({
       title: 'Grow review volume',
-      why: 'Low review count reduces trust and map click-through.',
-      action: 'Launch post-job review ask workflow with QR + SMS templates.',
+      why: 'Review depth directly impacts trust and click-through.',
+      action: 'Implement structured review acquisition flow with post-service prompts.',
       impact: 'High'
     });
   }
-  if (responseRate < 70) {
+  if ((responseRate ?? 0) < 75) {
     priorities.push({
-      title: 'Reply to more reviews',
-      why: 'Response consistency is a visible trust signal on profile pages.',
-      action: 'Use response templates to hit 90%+ reply coverage.',
+      title: 'Increase review response coverage',
+      why: 'Consistent responses improve perceived service quality.',
+      action: 'Set weekly review response SLA and template bank.',
       impact: 'High'
     });
   }
-  if (postsPerMonth < 4) {
+  if ((postsPerMonth ?? 0) < 4) {
     priorities.push({
       title: 'Increase posting cadence',
-      why: 'Inactive profiles lose freshness and engagement momentum.',
-      action: 'Publish 2-3 localized posts per week.',
+      why: 'Low posting activity weakens profile freshness signals.',
+      action: 'Publish 1–2 localized updates per week.',
       impact: 'High'
     });
   }
-  if (photoCount < 20) {
+  if ((photoCount ?? 0) < 20) {
     priorities.push({
-      title: 'Upload more job photos',
-      why: 'Photo depth improves profile confidence for first-time customers.',
-      action: 'Add before/after photos every week with service captions.',
+      title: 'Improve visual proof depth',
+      why: 'Thin media libraries reduce confidence for first-time buyers.',
+      action: 'Add weekly before/after or service evidence photos with captions.',
       impact: 'Medium'
     });
   }
-  if (servicesCount < 10) {
+  if (bookingStatus === false) {
     priorities.push({
-      title: 'Expand service coverage',
-      why: 'Thin service lists miss long-tail local intent searches.',
-      action: 'Add full service menu and city modifiers.',
-      impact: 'Medium'
-    });
-  }
-  if (!hasBookingLink) {
-    priorities.push({
-      title: 'Add booking/contact link',
-      why: 'Missing direct action links lowers conversion from profile views.',
-      action: 'Connect website booking page or estimate form.',
+      title: 'Fix direct conversion path',
+      why: 'Missing booking/contact link reduces conversion efficiency.',
+      action: 'Add a direct estimate/booking action in the profile.',
       impact: 'Medium'
     });
   }
 
-  const projectedCallLift = clamp(Math.round((100 - score) * 0.7), 8, 45);
+  const projectedCallLift = clamp(Math.round((84 - score) * 0.6), 0, 35);
   const weeklyPlan = [
-    'Week 1: GBP cleanup (categories, services, description, booking link).',
-    'Week 2: Publish localized post pack + upload new job photos.',
-    'Week 3: Review request push and response cleanup to 90%+.',
-    'Week 4: Competitor gap review + repeat top performing post format.'
+    'Week 1: Tighten profile foundations (core fields, categories, conversion path).',
+    'Week 2: Standardize weekly posting + photo rhythm.',
+    'Week 3: Raise review request and response coverage.',
+    'Week 4: Review results and apply next-wave optimization.'
   ];
+
+  const dataGaps = [];
+  if (rating === null) dataGaps.push('Add current average rating');
+  if (reviewCount === null) dataGaps.push('Add total review count');
+  if (postsPerMonth === null) dataGaps.push('Add monthly posting frequency');
+  if (photoCount === null) dataGaps.push('Add profile photo count');
+  if (responseRate === null) dataGaps.push('Add review response rate %');
+  if (servicesCount === null) dataGaps.push('Add number of listed services');
+  if (categoriesCount === null) dataGaps.push('Add number of active categories');
 
   return {
     businessName,
@@ -472,17 +647,29 @@ function generateGbpAudit(input = {}) {
     score,
     grade,
     projectedCallLift,
+    modeLabel,
+    confidenceLabel,
+    confidencePct,
+    dataSourceSummary: context.liveDataSource || 'self-reported form input',
+    liveDataError: context.liveDataError || null,
     summary:
-      `${businessName} is currently at ${score}/100 (${grade}). The fastest path to more inbound leads is fixing profile completeness and consistent posting/review operations.`,
+      `${businessName} is currently estimated at ${score}/100 (${grade}) with ${confidenceLabel.toLowerCase()} confidence (${confidencePct}%). Focus first on profile completeness, posting rhythm, and review operations.`,
     quickWins: [
-      'Update top 8 service entries with city-specific phrasing.',
-      'Reply to every unanswered review from the last 90 days.',
-      'Post one emergency-focused and one maintenance-focused update this week.',
-      'Add 10 recent before/after photos with clear captions.',
-      'Pin a direct estimate/booking link in the profile contact section.'
+      'Update top service entries with city-specific phrasing and intent match.',
+      'Reply to unresolved reviews from the past 90 days.',
+      'Publish one conversion-focused and one trust-focused GBP post this week.',
+      'Refresh profile media with recent service photos and captions.',
+      'Ensure direct booking/estimate path is visible in profile actions.'
     ],
     priorities: priorities.slice(0, 6),
     weeklyPlan,
+    scoreBreakdown: [
+      { name: 'Profile foundation', points: profileScore, maxPoints: 25, reason: 'Core profile quality, setup, and completeness.' },
+      { name: 'Reputation signals', points: reputationScore, maxPoints: 25, reason: 'Rating strength, review depth, and response consistency.' },
+      { name: 'Activity freshness', points: activityScore, maxPoints: 25, reason: 'Posting and photo cadence that signals active operations.' },
+      { name: 'Conversion readiness', points: conversionScore, maxPoints: 25, reason: 'Direct action paths and service discoverability quality.' }
+    ],
+    dataGaps: dataGaps.slice(0, 6),
     generatedPosts: buildPosts({ industry, city }),
     reviewReplies: buildReviewReplies({ businessName })
   };
@@ -495,7 +682,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/api/gbp/audit', async (req, res) => {
   try {
     const body = req.body || {};
-    const audit = generateGbpAudit(body);
+    const enrichment = await enrichAuditInputWithGooglePlaces(body);
+    const audit = generateGbpAudit(enrichment.mergedInput, {
+      liveDataUsed: enrichment.liveDataUsed,
+      liveDataSource: enrichment.liveDataSource,
+      liveDataError: enrichment.liveDataError
+    });
 
     await appendJsonLine(GBP_AUDITS_FILE, {
       ts: new Date().toISOString(),
@@ -503,6 +695,9 @@ app.post('/api/gbp/audit', async (req, res) => {
       industry: audit.industry,
       location: audit.location,
       score: audit.score,
+      grade: audit.grade,
+      confidencePct: audit.confidencePct,
+      modeLabel: audit.modeLabel,
       email: sanitizeText(body.email || ''),
       source: 'gbp-free-audit'
     });
@@ -567,7 +762,7 @@ app.post('/api/gbp/client/onboard', async (req, res) => {
 
 app.post('/api/gbp/client/login', async (req, res) => {
   const body = req.body || {};
-  const email = sanitizeText(body.email || '');
+  const email = sanitizeText(body.email || '').toLowerCase();
 
   if (!email.includes('@')) {
     return res.status(400).json({ ok: false, error: 'A valid email is required.' });
@@ -579,25 +774,37 @@ app.post('/api/gbp/client/login', async (req, res) => {
     email
   });
 
-  const seed = [...email].reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
-  const profileViews = 180 + (seed % 120);
-  const callActions = 26 + (seed % 20);
-  const reviewReplies = 14 + (seed % 22);
-  const score = 58 + (seed % 30);
+  const audits = await readJsonLines(GBP_AUDITS_FILE);
+  const relevantAudits = audits
+    .filter((row) => String(row?.email || '').toLowerCase() === email)
+    .sort((a, b) => String(b?.ts || '').localeCompare(String(a?.ts || '')));
+
+  const latestAudit = relevantAudits[0] || null;
+
+  const tasks = latestAudit
+    ? [
+        'Review latest audit score breakdown and close top-priority gap.',
+        'Implement this week\'s posting and review-response cadence.',
+        'Update services/categories and conversion links for your target city.',
+        'Book strategy check-in for next optimization cycle.'
+      ]
+    : [
+        'Run your first free audit to establish a baseline.',
+        'Submit business details so we can map your scope.',
+        'Book onboarding call to align priorities and package fit.',
+        'Launch your first 30-day execution cycle.'
+      ];
 
   return res.json({
     ok: true,
     dashboard: {
-      profileViews,
-      callActions,
-      reviewReplies,
-      score,
-      tasks: [
-        'Publish this week\'s localized profile post',
-        'Reply to newly received customer reviews',
-        'Refresh service/category entries for target city',
-        'Review competitor activity snapshot'
-      ]
+      auditRuns: relevantAudits.length,
+      lastAuditScore: latestAudit?.score ?? null,
+      lastAuditGrade: latestAudit?.grade ?? null,
+      confidencePct: latestAudit?.confidencePct ?? null,
+      lastUpdated: latestAudit?.ts ?? null,
+      score: latestAudit?.score ?? null,
+      tasks
     }
   });
 });

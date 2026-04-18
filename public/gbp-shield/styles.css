@@ -1395,3 +1395,78 @@ main > section.section:not(.final-cta) > .container > .pricing-note {
     padding: 18px;
   }
 }
+
+/* --- Multi-page premium expansion --- */
+.offer-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.offer-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border: 1px solid #d8e4f0;
+  border-radius: var(--body-card-radius, 15px);
+  box-shadow: 0 14px 30px rgba(10, 37, 64, 0.07);
+  padding: 20px;
+}
+
+.offer-card h3 {
+  margin: 0 0 8px;
+  color: #142c46;
+}
+
+.offer-card p,
+.offer-card li {
+  color: #556b82;
+  line-height: 1.55;
+}
+
+.offer-card ul {
+  margin: 10px 0 14px;
+  padding-left: 18px;
+}
+
+.service-intro {
+  margin-bottom: 14px;
+}
+
+.service-cta {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#offers,
+#proof {
+  padding-block: 76px;
+}
+
+.ops-estimator {
+  margin-top: 14px;
+  border: 1px solid #d8e4f0;
+  border-radius: 12px;
+  background: #fcfeff;
+  padding: 14px;
+}
+
+.ops-estimator h4 {
+  margin: 0 0 6px;
+}
+
+@media (max-width: 1020px) {
+  .offer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .service-cta .btn {
+    width: 100%;
+  }
+
+  .offer-card {
+    padding: 18px;
+  }
+}
