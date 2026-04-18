@@ -823,3 +823,110 @@ select:focus {
     left: auto;
   }
 }
+
+/* --- Premium body-section refinement (from Why Now downward) --- */
+.section {
+  position: relative;
+  padding: 64px 0;
+}
+
+.section:not(.final-cta) {
+  background: linear-gradient(180deg, #f8fafd 0%, #f3f7fc 100%);
+}
+
+.section.alt {
+  background: linear-gradient(180deg, #eef3f9 0%, #e8eef7 100%);
+}
+
+.section h2 {
+  color: #102a45;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+}
+
+.sub,
+.problem-box p,
+.step-card p,
+.feature-card p,
+.price-card li,
+.quote-card p,
+.faq-item p,
+.addon-card p,
+.card p,
+.card li,
+.pricing-note,
+.muted {
+  color: #5d7086;
+}
+
+.problem-box,
+.step-card,
+.feature-card,
+.price-card,
+.addon-card,
+.stats-grid > div,
+.quote-card,
+.faq-item,
+.audit-form,
+.audit-result,
+.cta-panel,
+.card,
+.page-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  border: 1px solid #dbe5f1;
+  border-radius: 14px;
+  box-shadow: 0 14px 30px rgba(10, 37, 64, 0.08);
+}
+
+.step-card,
+.feature-card,
+.price-card,
+.addon-card,
+.stats-grid > div,
+.quote-card,
+.faq-item,
+.card,
+.page-card {
+  padding: 18px;
+}
+
+.price-card {
+  position: relative;
+}
+
+.price-card.featured {
+  border-color: #ffcfb1;
+  box-shadow: 0 18px 34px rgba(10, 37, 64, 0.12);
+}
+
+.price-card.featured::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(90deg, #ff6200 0%, #ff8b45 100%);
+}
+
+.stats-grid strong {
+  color: #ff6200;
+}
+
+.faq-item summary {
+  color: #1a324c;
+  font-weight: 650;
+}
+
+.audit-form,
+.audit-result,
+.cta-panel {
+  padding: 18px;
+}
+
+.footer {
+  background: #f5f8fc;
+  border-top: 1px solid #dce6f2;
+}
